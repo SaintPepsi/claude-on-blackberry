@@ -1,7 +1,7 @@
 # Vector A: proot + Alpine Linux ARM64
 
-**Status:** NOT STARTED
-**Estimated difficulty:** Medium
+**Status:** COMPLETE — Claude Code v2.1.62 installed and verified
+**Estimated difficulty:** Hard (unexpected proot ELF interpreter issue)
 **Estimated time:** 30-60 minutes
 
 ## Overview
@@ -87,40 +87,54 @@ echo "nameserver 1.1.1.1" >> ~/alpine/etc/resolv.conf
 
 ## Step 5: Enter Alpine via proot
 
+**IMPORTANT:** The naive `proot -r ~/alpine /bin/sh` does NOT work on Android 6.
+You must invoke the musl dynamic loader directly (see Actual Results for full explanation).
+
 ```bash
-proot \
+PROOT_NO_SECCOMP=1 proot \
   --kill-on-exit \
-  -k 4.14.0 \
   -r ~/alpine \
   -b /proc:/proc \
   -b /sys:/sys \
   -b /dev:/dev \
   -b /dev/urandom:/dev/urandom \
-  --link2symlink \
+  -0 \
   -w /root \
-  /bin/sh -l
+  /lib/ld-musl-aarch64.so.1 /bin/busybox sh -c \
+  'export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && exec sh -l'
 ```
 
 Key flags:
-- `-k 4.14.0` — Spoofs kernel version so Node doesn't reject kernel 3.10
+- `PROOT_NO_SECCOMP=1` — Seccomp acceleration crashes on kernel 3.10
+- `/lib/ld-musl-aarch64.so.1` — Invoke musl loader directly (kernel can't resolve ELF interpreter)
 - `-r ~/alpine` — Root filesystem
 - `-b /proc:/proc` etc. — Bind-mount essential filesystems
-- `--link2symlink` — Required because Android's /data doesn't support hard links
+- `-0` — Fake root (required for package management)
+- **DO NOT USE `-k 4.14.0`** — Breaks Node.js CSPRNG (see Step 5.6)
 
 ### Verify you're in Alpine:
 
 ```bash
 cat /etc/os-release
-uname -r  # Should show 4.14.0 (spoofed)
+node --version  # Should show v20.x
+```
+
+## Step 5.5: Switch Alpine Repos to HTTP
+
+HTTPS/TLS causes proot to segfault on kernel 3.10. Switch to HTTP:
+
+```bash
+echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/main" > /etc/apk/repositories
+echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repositories
 ```
 
 ## Step 6: Install Node.js
 
 ```bash
 apk update
-apk add nodejs npm git
-node --version  # Expect v20.x or v22.x
-npm --version
+apk add nodejs npm
+node --version  # Expect v20.15.1
+npm --version   # Expect 10.9.1
 ```
 
 ## Step 7: Install Claude Code
@@ -129,25 +143,40 @@ npm --version
 npm install -g @anthropic-ai/claude-code
 ```
 
-### Fix the sharp module (if it errors):
+### If it fails, try these fixes:
 
 ```bash
+# Fix the sharp module (if it errors):
 npm install -g @img/sharp-wasm32 --force
 npm install -g sharp --force
-```
 
-### Fix /tmp paths (if Claude Code fails with EACCES):
-
-```bash
+# Fix /tmp paths (if Claude Code fails with EACCES):
 mkdir -p /tmp/claude
 export TMPDIR=/tmp
 ```
 
-## Step 8: Run Claude Code
+## Step 8: Authenticate and Run Claude Code
+
+On a machine where Claude Code is already logged in, generate a setup token:
 
 ```bash
-export ANTHROPIC_API_KEY="your-key-here"
+claude setup-token
+# Copy the sk-ant-oat01-... token it displays
+```
+
+Then write it to Alpine's profile on the phone (via SSH or inside Termux):
+
+```bash
+# Inside Alpine proot:
+echo 'export CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-YOUR-TOKEN-HERE' >> /root/.profile
+source /root/.profile
 claude
+```
+
+Alternatively, use an API key if you have one:
+
+```bash
+echo 'export ANTHROPIC_API_KEY=sk-ant-api03-YOUR-KEY-HERE' >> /root/.profile
 ```
 
 ## Step 9: Create a Launcher Script
@@ -156,42 +185,360 @@ Save this to `~/start-alpine.sh` in Termux (outside proot):
 
 ```bash
 #!/data/data/com.termux/files/usr/bin/bash
-proot \
+# Launch Alpine Linux proot and drop straight into Claude Code
+# CRITICAL: No kernel spoof (-k) — Node.js CSPRNG crashes with spoofed getrandom
+# CRITICAL: Must invoke musl loader directly — kernel can not resolve it on Android 6
+PROOT_NO_SECCOMP=1 proot \
   --kill-on-exit \
-  -k 4.14.0 \
   -r ~/alpine \
   -b /proc:/proc \
-  -b /sys:/sys \
   -b /dev:/dev \
   -b /dev/urandom:/dev/urandom \
-  --link2symlink \
+  -b /sys:/sys \
+  -0 \
   -w /root \
-  /bin/sh -l
+  /lib/ld-musl-aarch64.so.1 /bin/busybox sh -c \
+  "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && export HOME=/root && . /root/.profile && claude; reset; exec sh -l"
 ```
+
+Key changes from initial version:
+- `. /root/.profile` — sources the OAuth token before launching Claude
+- `claude; reset; exec sh -l` — when Claude exits, `reset` restores terminal from raw mode,
+  then `exec sh -l` drops to an Alpine login shell instead of killing Termux
 
 ```bash
 chmod +x ~/start-alpine.sh
 ```
 
+## Step 10: Auto-Launch Alpine When Termux Opens
+
+Save this as `~/.bashrc` in Termux (outside proot):
+
+```bash
+# Start SSH server for remote access (survives the Alpine exec)
+sshd 2>/dev/null
+
+# Auto-launch Alpine Linux proot
+# To skip: touch ~/.no-alpine (then restart Termux)
+# To re-enable: rm ~/.no-alpine
+if [ ! -f /etc/alpine-release ] && [ ! -f ~/.no-alpine ] && [[ $- == *i* ]]; then
+  exec ~/start-alpine.sh
+fi
+```
+
+Key features:
+- `sshd 2>/dev/null` runs BEFORE the exec, so SSH is always available on port 8022
+- `2>/dev/null` suppresses "already running" errors on subsequent sessions
+- Checks `/etc/alpine-release` to prevent recursion (won't trigger if already in Alpine)
+- Checks `~/.no-alpine` — touch this file to disable auto-launch
+- Checks `$-` for interactive flag — won't trigger for SSH remote commands
+
+## Step 11: Skip Onboarding and Auth Selection Screens
+
+Claude Code shows onboarding TUI screens (Getting Started, Select Login Method) on
+first launch. These require interactive input that's fragile on proot. Skip them by
+setting completion flags in the state file.
+
+Claude Code stores its state in TWO places:
+- `/root/.claude.json` — main state file (onboarding flags, feature flags, user ID)
+- `/root/.claude/settings.json` — user settings (theme, permissions)
+
+Set the onboarding flags via Node.js inside Alpine:
+
+```bash
+# Run from Termux (outside proot), or via SSH:
+PROOT_NO_SECCOMP=1 proot -r ~/alpine -b /proc:/proc -b /dev:/dev -b /sys:/sys -0 -w /root \
+  /lib/ld-musl-aarch64.so.1 /bin/busybox sh -c \
+  'export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && export HOME=/root && node -e "
+const fs=require(\"fs\");
+const p=\"/root/.claude.json\";
+const d=fs.existsSync(p)?JSON.parse(fs.readFileSync(p)):{};
+d.hasCompletedOnboarding=true;
+d.hasCompletedAuthFlow=true;
+d.hasCompletedProjectOnboarding=true;
+fs.writeFileSync(p,JSON.stringify(d,null,2));
+console.log(\"flags set\");
+"'
+```
+
+The three critical flags:
+- `hasCompletedOnboarding` — skips the "Getting Started" screen
+- `hasCompletedAuthFlow` — skips the "Select Login Method" screen
+- `hasCompletedProjectOnboarding` — skips the project intro screen
+
+Also create the settings file:
+
+```bash
+PROOT_NO_SECCOMP=1 proot -r ~/alpine -b /proc:/proc -b /dev:/dev -b /sys:/sys -0 -w /root \
+  /lib/ld-musl-aarch64.so.1 /bin/busybox sh -c \
+  '/bin/busybox mkdir -p /root/.claude && /bin/busybox echo '"'"'{"hasCompletedOnboarding":true,"theme":"dark"}'"'"' > /root/.claude/settings.json'
+```
+
+Note: inside the proot busybox shell, commands like `mkdir` and `echo` need to be
+prefixed with `/bin/busybox` because PATH isn't set up yet in this one-shot context.
+
+## Step 12: Emergency Recovery (Termux Failsafe)
+
+If the auto-launch creates a boot loop (Claude exits, Termux closes, reopen launches
+Claude again), use Termux's failsafe session:
+
+1. Open Termux (Claude will auto-launch)
+2. Press **Ctrl+C** immediately to kill proot
+3. When you see "process completed, press enter" — **DON'T press Enter**
+4. **Swipe from the left edge** of the screen to open the session drawer
+5. Tap **FAILSAFE** at the bottom of the drawer
+
+The failsafe shell uses `/system/bin/sh` without sourcing `.bashrc`. It doesn't have
+Termux's library paths, so you need to set them manually:
+
+```bash
+# Set Termux library path (failsafe shell doesn't have it)
+export LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib
+
+# Disable auto-launch
+touch /data/data/com.termux/files/home/.no-alpine
+
+# Start SSH server for remote fixes
+/data/data/com.termux/files/usr/bin/sshd
+```
+
+Then SSH in from another machine to apply fixes. Re-enable auto-launch with:
+```bash
+rm ~/.no-alpine
+```
+
 ## Known Risks
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| proot .deb is community-built | Medium | Inspect before installing |
-| Networking hangs inside Alpine | High | Manual DNS in Step 4 |
-| getrandom syscall missing (kernel 3.17+) | Low | Bind-mount /dev/urandom; proot redirects |
-| Performance overhead (ptrace mode) | Medium | CLI is viable; API latency dominates anyway |
-| No seccomp fast path on kernel 3.10 | Medium | Falls back to pure ptrace; slower but functional |
+| Risk | Severity | Mitigation | Status |
+|------|----------|------------|--------|
+| proot .deb is community-built | Medium | Inspect before installing | ACCEPTED |
+| HTTPS/TLS segfaults in proot | **Critical** | Use HTTP repos only (Step 5.5) | SOLVED |
+| Kernel spoof breaks Node.js CSPRNG | **Critical** | Don't use `-k 4.14.0` (Step 5.6) | SOLVED |
+| ELF interpreter not found on Android | **Critical** | Invoke musl loader directly (Step 5) | SOLVED |
+| getrandom syscall missing (kernel 3.10) | High | Don't spoof kernel; Node falls back to /dev/urandom | SOLVED |
+| Performance overhead (ptrace + no seccomp) | Medium | CLI is viable; API latency dominates anyway | ACCEPTED |
+| GitHub .deb URL returns 404 | Low | Download ZIP, extract, serve from Mac HTTP | SOLVED |
+| Terminal raw mode on Claude exit | **Critical** | `reset; exec sh -l` after claude in launcher | SOLVED |
+| exec chain kills Termux on exit | **Critical** | Shell fallback after reset (Step 9) | SOLVED |
+| sshd doesn't survive reboot | Medium | Auto-start in .bashrc before exec (Step 10) | SOLVED |
+| Boot loop if Claude can't start | High | Failsafe session recovery (Step 12) | SOLVED |
 
 ## Actual Results
 
-> Document what actually happened here as you go through the steps.
+### Step 1 Result: FAILED initially, then FIXED
+- Termux frozen repo repos work fine for `apt install libtalloc`
+- The GitHub URL `https://github.com/TokiZeng/.../raw/main/proot_5.1.107-65_aarch64.deb` returns 404
+- The .deb files are inside a ZIP: `proot-distro_4.16.0_all.zip`
+- Had to download ZIP on Mac, extract, serve via `python3 -m http.server 9999`
+- Phone downloaded from Mac: `curl -o ~/proot.deb http://192.168.4.32:9999/proot_5.1.107-65_aarch64.deb`
+- `dpkg -i ~/proot.deb` needed libtalloc: `apt install libtalloc` from frozen repo worked
+- proot 5.1.0 installed with process_vm and seccomp_filter accelerators
 
-### Step 1 Result:
-### Step 2 Result:
-### Step 3 Result:
-### Step 4 Result:
-### Step 5 Result:
-### Step 6 Result:
-### Step 7 Result:
-### Step 8 Result:
+### Step 2 Result: SUCCESS
+- `dpkg -i` initially failed: needed `apt install libtalloc` first
+- After libtalloc: both proot and libtalloc configured successfully
+- `proot --version` shows 5.1.0 with both accelerators
+
+### Step 3 Result: SUCCESS
+- `curl -L -o ~/alpine.tar.gz https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/aarch64/alpine-minirootfs-3.20.0-aarch64.tar.gz`
+- 3.9MB download, extracted to ~/alpine
+- Alpine Linux v3.20 confirmed via /etc/os-release
+
+### Step 4 Result: SUCCESS
+- DNS configured: `nameserver 8.8.8.8` and `nameserver 1.1.1.1`
+
+### Step 5 Result: MAJOR ISSUE FOUND AND SOLVED
+
+**The Problem:** `proot -r ~/alpine /bin/sh` always fails with:
+```
+proot error: execve("/bin/sh"): No such file or directory
+```
+Even though `/bin/sh` exists in the rootfs. The error says "ELF but its interpreter
+(eg. ld-linux.so) was not found" — the kernel tries to load `/lib/ld-musl-aarch64.so.1`
+at the HOST level before proot can intercept the execve. On Android (Bionic), this
+path doesn't exist on the real filesystem.
+
+**Things that did NOT fix it:**
+- `--link2symlink` flag
+- `-0` (fake root) flag
+- `PROOT_NO_SECCOMP=1`
+- `-R` instead of `-r`
+- Fixing symlinks (sh -> busybox relative vs absolute)
+- Calling /bin/busybox directly instead of /bin/sh
+
+**THE FIX:** Invoke the musl dynamic loader directly as the entry point:
+```bash
+proot -r ~/alpine /lib/ld-musl-aarch64.so.1 /bin/busybox sh
+```
+
+This bypasses the kernel's ELF interpreter resolution entirely. The musl loader
+is a statically-linked binary itself, so the kernel can execute it without needing
+another interpreter. It then loads and runs busybox.
+
+**Working proot command:**
+```bash
+proot --kill-on-exit -k 4.14.0 -r ~/alpine \
+  -b /proc:/proc -b /dev:/dev -b /dev/urandom:/dev/urandom \
+  -w /root /lib/ld-musl-aarch64.so.1 /bin/busybox sh \
+  -c "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && uname -r"
+```
+
+Output: `4.14.0` — kernel spoof working, Alpine shell running.
+
+### Step 5.5: HTTPS/TLS Segfault in proot — DISCOVERED AND SOLVED
+
+**The Problem:** `apk update` segfaults (signal 11) inside proot when repos use HTTPS:
+```
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.20/main/aarch64/APKINDEX.tar.gz
+proot info: vpid 1: terminated with signal 11
+```
+
+This happens even with `PROOT_NO_SECCOMP=1`. The TLS/SSL operations trigger
+syscalls that proot 5.1.0 cannot properly intercept on kernel 3.10.
+
+**THE FIX:** Switch Alpine repos from HTTPS to HTTP:
+```bash
+echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/main" > /etc/apk/repositories
+echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repositories
+```
+
+Basic HTTP networking works fine through proot. Only HTTPS/TLS causes the segfault.
+
+### Step 5.6: Kernel Spoof Breaks Node.js CSPRNG — DISCOVERED AND SOLVED
+
+**The Problem:** With `-k 4.14.0` kernel spoof, `npm --version` crashes:
+```
+Assertion failed: crypto::CSPRNG(nullptr, 0).is_ok()
+proot info: vpid 1: terminated with signal 6
+```
+
+Node.js thinks it's on kernel 4.14 → tries `getrandom()` syscall (added in 3.17) →
+real kernel 3.10 doesn't have it → proot doesn't properly intercept → CSPRNG fails → abort.
+
+**THE FIX:** Don't use kernel version spoofing. Remove `-k 4.14.0` from proot command.
+Without the spoof, Node.js sees kernel 3.10, falls back to `/dev/urandom`, works correctly.
+
+Note: `-k 4.14.0` was originally added for `uname -r` spoofing, but Node 20 from Alpine
+musl builds apparently doesn't enforce a minimum kernel version check. If Claude Code
+later needs a spoofed kernel version, we'll need a different approach (e.g., LD_PRELOAD
+shim for getrandom).
+
+### Step 6 Result: SUCCESS
+- HTTPS repos crash proot with signal 11 — switched to HTTP repos (see Step 5.5)
+- `apk update` fetched 24,058 packages from Alpine v3.20
+- `apk add nodejs npm` installed 12 packages (76 MiB total)
+- **Node.js v20.15.1** confirmed via `node --version`
+- **npm 10.9.1** confirmed via `npm --version`
+- CRITICAL: Must NOT use `-k 4.14.0` kernel spoof with Node (see Step 5.6)
+- Must use `PROOT_NO_SECCOMP=1` and `-0` (fake root) flags
+
+### Step 7 Result: SUCCESS
+- `npm install -g @anthropic-ai/claude-code` completed in ~1 minute
+- Installed 3 packages
+- Claude Code v2.1.62 confirmed via `claude --version`
+- `claude --help` outputs full usage information
+
+### Step 8 Result: SUCCESS — FIRST API CALL CONFIRMED
+
+**Authentication:** OAuth token via `CLAUDE_CODE_OAUTH_TOKEN` env var.
+- `claude auth login` and `claude setup-token` both require interactive TUI — can't pipe tokens
+- Solution: generate token on another machine via `claude setup-token`, copy the `sk-ant-oat01-...` string
+- Set in Alpine's profile: `echo 'export CLAUDE_CODE_OAUTH_TOKEN=...' >> /root/.profile`
+
+**First successful API call:**
+```bash
+$ claude -p "Say hello from BlackBerry Priv in exactly 8 words"
+Hello from the iconic BlackBerry Priv sliding keyboard phone!
+```
+
+**Auto-launch configured:**
+- `~/start-alpine.sh` now launches Claude Code directly (not just Alpine shell)
+- `~/.bashrc` in Termux auto-runs `start-alpine.sh` for interactive sessions
+- Opening Termux = straight into Claude Code, fully authenticated
+- Escape hatch: `touch ~/.no-alpine` to disable auto-launch
+
+### Updated Launcher Script (~/start-alpine.sh)
+
+The final working launcher script incorporates ALL discoveries:
+
+```bash
+#!/data/data/com.termux/files/usr/bin/bash
+# Launch Alpine Linux proot and drop straight into Claude Code
+# CRITICAL: No kernel spoof (-k) — Node.js CSPRNG crashes with spoofed getrandom
+# CRITICAL: Must invoke musl loader directly — kernel can not resolve it on Android 6
+PROOT_NO_SECCOMP=1 proot \
+  --kill-on-exit \
+  -r ~/alpine \
+  -b /proc:/proc \
+  -b /dev:/dev \
+  -b /dev/urandom:/dev/urandom \
+  -b /sys:/sys \
+  -0 \
+  -w /root \
+  /lib/ld-musl-aarch64.so.1 /bin/busybox sh -c \
+  "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && export HOME=/root && . /root/.profile && claude; reset; exec sh -l"
+```
+
+Key details:
+- Auth is handled via `CLAUDE_CODE_OAUTH_TOKEN` in `/root/.profile` (sourced before claude)
+- `claude; reset; exec sh -l` — semicolons mean: run claude, when it exits run reset, then drop to shell
+- `reset` clears terminal raw mode that Claude Code's Ink TUI leaves behind
+- `exec sh -l` gives an Alpine login shell as a fallback instead of killing Termux
+
+### Updated .bashrc (Termux, outside proot)
+
+```bash
+# Start SSH server for remote access (survives the Alpine exec)
+sshd 2>/dev/null
+
+# Auto-launch Alpine Linux proot
+# To skip: touch ~/.no-alpine (then restart Termux)
+# To re-enable: rm ~/.no-alpine
+if [ ! -f /etc/alpine-release ] && [ ! -f ~/.no-alpine ] && [[ $- == *i* ]]; then
+  exec ~/start-alpine.sh
+fi
+```
+
+Key detail: `sshd` runs BEFORE the `exec`, so SSH is always available even if the Alpine
+launch fails. The `2>/dev/null` suppresses "already running" noise on subsequent sessions.
+
+### Settings.json (Alpine, /root/.claude/settings.json)
+
+```json
+{"hasCompletedOnboarding":true,"theme":"dark"}
+```
+
+Skips the onboarding "Getting Started" screen that appears on every launch.
+
+### Session 3 Recovery: Termux Failsafe Discovery
+
+When the exec chain created a boot loop (Claude exits -> Termux closes -> reopen ->
+Claude launches again), recovery was achieved via Termux's **failsafe session**:
+
+1. Open Termux, Ctrl+C to kill proot
+2. At "process completed" prompt, swipe from left edge to open session drawer
+3. Tap FAILSAFE — this runs `/system/bin/sh` without `.bashrc`
+4. Failsafe shell needs Termux library path:
+   ```bash
+   export LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib
+   touch /data/data/com.termux/files/home/.no-alpine
+   /data/data/com.termux/files/usr/bin/sshd
+   ```
+5. SSH in from Mac and apply fixes
+
+### Summary of All Required Flags
+
+| Flag/Env | Required | Why |
+|----------|----------|-----|
+| `PROOT_NO_SECCOMP=1` | YES | seccomp acceleration causes crashes on kernel 3.10 |
+| `--kill-on-exit` | YES | Clean up child processes when proot exits |
+| `-r ~/alpine` | YES | Root filesystem |
+| `-b /proc:/proc` | YES | Process information |
+| `-b /dev:/dev` | YES | Device access |
+| `-b /dev/urandom:/dev/urandom` | YES | Random number generation for Node.js |
+| `-b /sys:/sys` | YES | System information |
+| `-0` | YES | Fake root (required for apk) |
+| `-w /root` | YES | Working directory |
+| `/lib/ld-musl-aarch64.so.1` | YES | Musl loader as entry point (Android ELF fix) |
+| `-k 4.14.0` | **NO** | Breaks Node.js CSPRNG — do NOT use |
+| HTTP repos (not HTTPS) | YES | HTTPS/TLS causes proot segfault |
