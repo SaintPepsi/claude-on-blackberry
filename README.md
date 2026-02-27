@@ -199,6 +199,23 @@ The failsafe shell bypasses `.bashrc` entirely, using `/system/bin/sh` directly.
 - Launcher now sources `.profile` for OAuth token persistence
 - Full boot loop recovery documented (failsafe + LD_LIBRARY_PATH)
 
+### Session 4 — 2026-02-27
+
+**MILESTONE: SHELL FIX, STARTUP OPTIMIZATION, PERMISSIONS DISCOVERY**
+
+- Fixed "No suitable shell found" — installed bash, set `SHELL=/bin/bash` in `.profile`
+- Installed git via `apk add git`
+- Startup time analysis: **~21 seconds** from Node.js start to first API response
+  - Biggest bottleneck: TUI/Ink init through proot ptrace (~8-9 seconds, unavoidable)
+  - OAuth 403s wasting ~5 seconds (setup token lacks `user:profile` scope)
+  - MCP config scan: ~3-4 seconds for 0 servers
+- Added performance env vars to `.profile`:
+  - `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` — eliminates dead OAuth calls
+  - `DISABLE_AUTOUPDATER=1` — skips update checks
+  - `NODE_OPTIONS="--max-old-space-size=512"` — limits V8 heap on 3GB device
+- Discovered: `--dangerously-skip-permissions` **incompatible with proot's `-0` (fake root)** — Claude detects uid 0 and refuses the flag
+- Realistic startup: **~16-18 seconds** (with 2-3s run-to-run variance from proot)
+
 ### Connection Command (for remote management)
 
 ```bash

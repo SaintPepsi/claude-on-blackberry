@@ -307,6 +307,81 @@ Then SSH in from another machine to apply fixes. Re-enable auto-launch with:
 rm ~/.no-alpine
 ```
 
+## Step 13: Fix "No Suitable Shell Found" Error
+
+Claude Code requires a `SHELL` environment variable pointing to a valid Posix shell.
+Alpine's proot environment doesn't set this by default, causing Claude to error with
+"No suitable shell found. Claude CLI requires a Posix shell environment."
+
+Install bash and set the env var:
+
+```bash
+# Inside Alpine (via SSH + proot or interactive session):
+apk add bash git  # bash for SHELL, git for Claude Code VCS features
+```
+
+Add to `/root/.profile`:
+```bash
+export SHELL=/bin/bash
+```
+
+Note: `apk add bash` shows harmless terminfo permission errors during install — ignore them.
+
+## Step 14: Startup Performance Tuning
+
+Claude Code startup through proot takes ~21 seconds. The main bottlenecks:
+
+| Phase | Duration | Notes |
+|-------|----------|-------|
+| TUI/Ink initialization | ~8-9s | React rendering through ptrace — unavoidable |
+| MCP config scanning | ~3-4s | Scans for 0 servers, internal to Claude Code |
+| OAuth 403 errors | ~5s | Setup token lacks scopes, calls always fail |
+| API call latency | ~1-2s | Network round-trip, irreducible |
+
+Add performance env vars to `/root/.profile`:
+
+```bash
+# Skip OAuth profile/client_data calls (always 403 with setup token)
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+
+# Skip auto-update checks
+export DISABLE_AUTOUPDATER=1
+
+# Limit V8 heap on 3GB device
+export NODE_OPTIONS="--max-old-space-size=512"
+```
+
+The complete `/root/.profile` should now contain:
+
+```bash
+export CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...
+export SHELL=/bin/bash
+
+# Performance: skip OAuth profile/client_data calls (always 403 with setup token)
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+
+# Performance: skip auto-update checks
+export DISABLE_AUTOUPDATER=1
+
+# Performance: limit V8 heap on 3GB device
+export NODE_OPTIONS="--max-old-space-size=512"
+```
+
+Realistic startup after tuning: **~16-18 seconds** (with 2-3s run-to-run variance from proot overhead).
+
+## Step 15: --dangerously-skip-permissions Is Incompatible with proot -0
+
+`--dangerously-skip-permissions` cannot be used when running as root. proot's `-0` flag
+(fake root) makes Claude Code detect uid 0, which triggers a security check:
+
+```
+--dangerously-skip-permissions cannot be used with root/sudo privileges for security reasons
+```
+
+There is no workaround short of removing `-0` from proot, which would break `apk` and
+other root-requiring operations. The flag is not essential — Claude Code works fine
+without it, just prompts for tool permissions interactively.
+
 ## Known Risks
 
 | Risk | Severity | Mitigation | Status |
@@ -322,6 +397,9 @@ rm ~/.no-alpine
 | exec chain kills Termux on exit | **Critical** | Shell fallback after reset (Step 9) | SOLVED |
 | sshd doesn't survive reboot | Medium | Auto-start in .bashrc before exec (Step 10) | SOLVED |
 | Boot loop if Claude can't start | High | Failsafe session recovery (Step 12) | SOLVED |
+| SHELL env var not set in Alpine | High | Install bash, set SHELL=/bin/bash (Step 13) | SOLVED |
+| Startup takes ~21 seconds | Medium | Performance env vars reduce to ~16-18s (Step 14) | MITIGATED |
+| --dangerously-skip-permissions fails | Low | Incompatible with proot -0 fake root (Step 15) | KNOWN |
 
 ## Actual Results
 
@@ -484,6 +562,7 @@ Key details:
 - `claude; reset; exec sh -l` — semicolons mean: run claude, when it exits run reset, then drop to shell
 - `reset` clears terminal raw mode that Claude Code's Ink TUI leaves behind
 - `exec sh -l` gives an Alpine login shell as a fallback instead of killing Termux
+- **Note:** `--dangerously-skip-permissions` cannot be used because proot's `-0` (fake root) makes Claude see uid 0, which triggers a security check that blocks the flag
 
 ### Updated .bashrc (Termux, outside proot)
 
@@ -541,4 +620,9 @@ Claude launches again), recovery was achieved via Termux's **failsafe session**:
 | `-w /root` | YES | Working directory |
 | `/lib/ld-musl-aarch64.so.1` | YES | Musl loader as entry point (Android ELF fix) |
 | `-k 4.14.0` | **NO** | Breaks Node.js CSPRNG — do NOT use |
+| `--dangerously-skip-permissions` | **NO** | Blocked by proot's `-0` fake root (uid 0 check) |
 | HTTP repos (not HTTPS) | YES | HTTPS/TLS causes proot segfault |
+| `SHELL=/bin/bash` | YES | Claude Code requires SHELL env var |
+| `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` | Recommended | Eliminates dead OAuth 403 calls (~5s saved) |
+| `DISABLE_AUTOUPDATER=1` | Recommended | Skips update checks |
+| `NODE_OPTIONS="--max-old-space-size=512"` | Recommended | Limits V8 heap on 3GB device |
