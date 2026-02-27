@@ -216,12 +216,35 @@ The failsafe shell bypasses `.bashrc` entirely, using `/system/bin/sh` directly.
 - Discovered: `--dangerously-skip-permissions` **incompatible with proot's `-0` (fake root)** — Claude detects uid 0 and refuses the flag
 - Realistic startup: **~16-18 seconds** (with 2-3s run-to-run variance from proot)
 
+### Session 5 — 2026-02-28
+
+**MILESTONE: SSH MULTIPLEXING, PERMISSIONS WILDCARD, DEVICE MANAGEMENT AUDIT**
+
+- SSH multiplexing configured (`~/.ssh/config` with `ControlMaster`)
+  - Before: 2-3s per command (full handshake each time)
+  - After: 0.3s per command (`ssh bb '<command>'`)
+  - Persistent connection: 4 hours with keepalive
+- Permissions wildcard: `settings.json` updated to `"allow": ["*"]` — all tools auto-approved
+  - Workaround for `--dangerously-skip-permissions` being blocked by proot fake root
+- Full device management audit: probed all Android management commands from Termux
+  - `pm list packages`, `pm path`, `am start` — all work (read-only + launch)
+  - `pm uninstall`, `pm disable-user`, `settings` — blocked (requires ADB shell uid 2000)
+  - Termux user uid 10110 is sandboxed by Android security model
+- ADB over WiFi: **not available** in BlackBerry Priv Developer Options
+  - `adbd` running but USB-only mode (no TCP port)
+  - One-time USB data cable needed to run `adb tcpip 5555` and unlock WiFi ADB permanently
+
 ### Connection Command (for remote management)
 
 ```bash
+# Fast (requires ~/.ssh/config — see docs/03-session-5-remote-management.md):
+ssh bb 'command'
+
+# Establish persistent master connection (lasts 4 hours):
+ssh -fN bb
+
+# Legacy (no config needed):
 ssh -p 8022 -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes 192.168.4.51
-# sshd now starts automatically when Termux opens
-# If phone rebooted: just open Termux, sshd starts via .bashrc
 ```
 
 See `docs/` for detailed step-by-step logs of each approach.
