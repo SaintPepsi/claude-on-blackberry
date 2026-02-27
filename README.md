@@ -234,6 +234,47 @@ The failsafe shell bypasses `.bashrc` entirely, using `/system/bin/sh` directly.
   - `adbd` running but USB-only mode (no TCP port)
   - One-time USB data cable needed to run `adb tcpip 5555` and unlock WiFi ADB permanently
 
+### Session 6 — 2026-02-28
+
+**MILESTONE: ROOT EXPLOIT COMPILATION, PERMISSION WALL DISCOVERY**
+
+- Dirty COW (CVE-2016-5195) selected — kernel 3.10 is in vulnerable range
+- Cross-compiled exploit for aarch64 using Docker ARM64 emulation
+- Built 944-byte no-libc root shell payload (direct aarch64 syscalls, no musl)
+  - Standard musl static binary: 66KB (too large for 14KB run-as target)
+  - No-libc payload: 944 bytes with 13KB headroom
+- **Permission wall discovered:** `/system/bin/run-as` is `rwxr-x---` (root:shell only)
+  - Termux uid 10110 cannot read the target file — exploit fails at `open()`
+  - This is why all Dirty COW Android tutorials use ADB shell (uid 2000, shell group)
+- Investigated alternatives: Zygote hijack, vDSO injection, libc modification, Qualcomm CVEs
+- Spawned an AI subagent that refused to help with the exploit (documented in session notes)
+- Shared libraries (`libc.so` etc.) are world-readable — potential injection target
+- `/dev/kgsl-3d0` (Qualcomm GPU) is world-writable — potential kernel exploit vector
+- **Next step:** USB data cable for ADB shell, or vDSO arm64 shellcode development
+
+### Session 7 — 2026-02-28
+
+**MILESTONE: DIRTY COW CONFIRMED PATCHED, FULL ATTACK SURFACE AUDIT**
+
+- **Dirty COW definitively tested on app_process64** (world-readable, 22456 bytes)
+  - Exploit ran, mmap succeeded, race executed 456,544 madvise iterations
+  - Result: **Bus error (SIGBUS), bytes unchanged, checksum identical**
+  - Kernel patched: Oct 2017 security patches include Nov 2016 Dirty COW fix
+- Built 1288-byte no-libc bind shell payload (port 9999) for Zygote hijack approach
+- Comprehensive attack surface audit of every remaining vector:
+  - Transparent Huge Pages: not enabled (blocks Huge Dirty COW CVE-2017-1000405)
+  - User namespaces: not compiled (blocks modern kernel exploits)
+  - AF_PACKET: exists but zero capabilities (can't create raw sockets)
+  - perf_event: paranoid level 3 (maximum restriction)
+  - userfaultfd, V4L2, keyctl, mqueue: all unavailable
+  - No SUID binaries, no filesystem capabilities anywhere
+  - SELinux enforcing, `untrusted_app` domain blocks all system access
+  - `setprop`, `am start`, `content query`: all blocked by SELinux/permissions
+- `/dev/kgsl-3d0` opens from Termux — last theoretical vector (requires custom exploit)
+- **Conclusion: BlackBerry Priv is unrootable from Termux sandbox with known exploits**
+  - XDA's $1000 bounty for BB Priv root was never claimed — now we know why
+  - Most practical path: USB data cable for ADB shell (uid 2000, not root, but useful)
+
 ### Connection Command (for remote management)
 
 ```bash
