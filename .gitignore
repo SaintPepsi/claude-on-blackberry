@@ -1,0 +1,3 @@
+# proot binaries downloaded during setup (served to phone via HTTP)
+*.deb
+*.zip
