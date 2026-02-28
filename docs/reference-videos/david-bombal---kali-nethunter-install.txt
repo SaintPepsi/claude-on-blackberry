@@ -1,0 +1,191 @@
+# David Bombal - Kali NetHunter install
+# YouTube: https://www.youtube.com/watch?v=KxOGyuGq0Ts
+# Auto-generated transcript
+
+[00:00] - In this video, I'm gonna show you
+[00:01] how to get Kali NetHunter
+[00:03] installed and running on an Android phone.
+[00:05] The process is actually
+not that difficult.
+[00:07] This is not a rooted phone.
+[00:10] This is a rootless installation.
+[00:11] I could use John to do a password crack.
+[00:14] I could do wireless attacks.
+[00:15] In this video, I'm just gonna
+show you the installation,
+[00:18] and do a basic end map of scan.
+[00:20] In subsequent videos.
+[00:21] I'll show you, as an example,
+how to do Wi-Fi hacking
+[00:24] and use some of the applications
+directly from your phone.
+[00:27] Let's get started.
+[00:28] (upbeat techno music)
+[00:33] Let's see how long it takes me to get Kali
+[00:35] up and running on this Android phone.
+[00:37] First step is to go to GitHub,
+termux/termux-app releases.
+[00:41] I'll put a presentation, below,
+that has all of these steps
+[00:44] so that you can follow along.
+[00:45] Basically, all you need to
+do is download this software.
+[00:48] So we're gonna download the apk.
+[00:51] Once it's downloaded, click Open,
+[00:53] and then install the application.
+[00:55] Okay, application is installed,
+[00:57] so I can select Open.
+[00:58] Okay, so there you go.
+[00:59] Termux is installed.
+[01:01] This is, essentially, Linux.
+[01:03] So what I can do now is type "apt update"
+[01:06] to update references.
+[01:09] And then, I'm gonna do "apt upgrade"
+[01:11] to upgrade the software.
+[01:13] Specify "yes" to continue
+the installation.
+[01:16] If you prompt it at any point,
+[01:17] just say, "Yes," to install the software.
+[01:20] So I'm gonna say, "Yes."
+[01:21] I'm gonna say, "Yes," once again.
+[01:22] And I wanna say, "Yes," to
+keep the current version.
+[01:25] Okay, I'm gonna do an "apt update" again,
+[01:27] just to update references.
+[01:28] Make sure that they're all good.
+[01:30] And then I'm going to install wget,
+[01:33] so "apt install wget."
+[01:35] Say, "Yes," to install it.
+[01:37] Now, I'm gonna use "wget
+-O install-nethunter-termux
+[01:42] https://offs.ec/2MceZ,
+[01:49] or Z, if you prefer, Wr.
+[01:51] Once again, I've put a PDF below
+[01:53] which shows you all of these steps,
+[01:54] so that you can follow that if you prefer.
+[01:57] So I'm gonna press Enter
+to download the software.
+[02:01] I'm gonna change permission
+[02:02] so that I can execute the software.
+[02:05] It's installed, nethunter-termux.
+[02:07] Press Enter,
+[02:08] and then install the software.
+[02:12] All you need to do, now, is wait
+[02:13] for the installation to complete.
+[02:15] It may take a long time for
+the software to install.
+[02:18] Go and grab a coffee,
+[02:20] go and do something
+else while it installs.
+[02:22] You'll eventually receive a prompt:
+[02:24] "Delete downloaded rootfs file."
+[02:27] We're gonna say, "No."
+[02:29] And there you go.
+[02:29] Kali NetHunter is installed on this phone.
+[02:32] What we can do now is
+[02:34] either use NetHunter to
+start the NetHunter CLI.
+[02:38] We could also use the shortcut nh,
+[02:40] and then I could use a command
+such as "nmap kali.org."
+[02:44] And we can see which ports are open.
+[02:46] Port 22, so ssh.
+[02:48] 80 and 443.
+[02:50] I'll exit out of NetHunter.
+[02:52] And what I'm gonna do now
+is set the KeX password.
+[02:55] So "nethunter kex password."
+[02:58] I'll specify a password.
+[03:00] I'm not gonna set a view-only password.
+[03:02] And what I'll do is start KeX,
+[03:05] So NetHunter KeX,
+[03:06] you'll get these errors, but that's okay.
+[03:08] Now, what I'll do is
+[03:10] I'm gonna go to the NetHunter website,
+[03:12] which is store.nethunter.com/en/,
+[03:15] and I'm gonna scroll down
+[03:17] and I'm gonna download the store app.
+[03:20] I'm gonna open the file
+[03:22] and I'm gonna install it.
+[03:23] Select Open.
+[03:25] And rather than looking at
+the various options here,
+[03:27] I'm going to search for NetHunter KeX,
+[03:30] and I'm gonna download that.
+[03:32] Now, in this example,
+[03:33] I've previously downloaded
+NetHunter on this phone
+[03:35] and then removed it,
+[03:37] and I'm installing it again.
+[03:38] You may get some additional prompts.
+[03:40] As an example,
+[03:41] you may have to select
+the Package Installer.
+[03:44] So I'm gonna click Install.
+[03:45] I'm told that, for my security,
+[03:47] the phone is not allowed
+to install unknown apps.
+[03:49] I'm gonna go to Settings.
+[03:50] I'm going to allow the
+app to be installed.
+[03:53] Click Install.
+[03:55] Now, if necessary, search for KeX,
+[03:58] and then select the NetHunter
+KeX from the applications.
+[04:02] I'm gonna allow the app to access files
+[04:04] and photos on my phone.
+[04:06] And then, what I'm gonna do is
+[04:07] specify the VNC password that I created.
+[04:10] And then, I'm going to connect.
+[04:12] And there you go.
+[04:13] I've got Kali running on this phone.
+[04:16] I'll change my input mode
+to direct, swipe pan.
+[04:19] As you can see,
+[04:20] I can access applications
+in Kali on my phone.
+[04:26] I could "ping google.com," as an example.
+[04:29] You can see the ping succeeds,
+[04:31] and then I could do a basic nmap scan.
+[04:34] Once again, of Kali.org.
+[04:36] You can see that Port 22 is open.
+[04:39] Port 80 and Port 443.
+[04:41] I'll show you in separate
+videos, as an example,
+[04:44] how to use a phone to
+attack Wi-Fi network.
+[04:46] So use Kali or Termux on a phone.
+[04:49] Now, please note that,
+[04:50] at the time of this recording,
+[04:52] you can get this to run on Android 12,
+[04:54] but you may have issues
+where processes are killed.
+[04:58] In my example, I'm using an
+older version of Android.
+[05:00] This is Android 11.
+[05:01] Hopefully, on Android 13, as an example,
+[05:03] this will be solved.
+[05:04] Have a look at the PDF,
+which I've linked below,
+[05:06] which has a link to the Github page
+[05:08] explaining that issue in more detail.
+[05:10] And also, shows you step-by-step
+[05:11] how to get Kali up and
+running on an Android phone.
+[05:14] This is just a standard Android phone.
+[05:16] It's not been rooted,
+[05:17] so I can access my other applications
+[05:20] directly on this phone.
+[05:22] As an example, I could open up Chrome,
+[05:24] and use other applications on the phone
+[05:26] at the same time as having
+Kali running on this phone.
+[05:30] If you enjoyed this video,
+[05:31] please consider subscribing
+to my YouTube channel.
+[05:33] Please like this video,
+[05:34] and click on the bell
+to get notifications.
+[05:36] I'm David Bombal,
+[05:36] and I wanna wish you all the very best.
+[05:38] (upbeat techno music)

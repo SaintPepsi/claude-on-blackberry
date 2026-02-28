@@ -1,0 +1,511 @@
+# sw7ft - BB10 Revival QNX Dev Update
+# YouTube: https://www.youtube.com/watch?v=6xecyHZy9ZI
+# Auto-generated transcript
+
+[00:01] All right, good evening.
+[00:03] Yeah, so I thought I'd just do a bit of
+[00:05] a bit of a catchup video on where I'm at
+[00:08] with some of the BlackBerry stuff that
+[00:10] I'm working on and kind of give the all
+[00:14] my subscribers a bit of an update on
+[00:16] some of the new things I'm planning and
+[00:18] uh some of the things I think that are
+[00:20] possible. So, kind of where we are. So
+[00:23] about a year and a half ago, um
+[00:27] I've always been uh really
+[00:30] uh passionate about, you know, the
+[00:33] BlackBerry devices and because I still
+[00:35] use them and they were still productive
+[00:37] because I was uh continually using SSH
+[00:40] and RDP to manage my server
+[00:42] infrastructure and whatnot. It's very
+[00:44] good device. Um I kind of just kept it
+[00:47] around, but I always had an idea that I
+[00:49] wanted to push the development of it in
+[00:51] a direction
+[00:53] And so about a year and a half ago, two
+[00:54] years ago, I was doing everything I
+[00:56] could to kind of keep the device alive.
+[00:58] And I knew that I could build Android
+[01:00] apps and and whatnot, but it was pretty
+[01:02] pretty complex to, you know, to do it.
+[01:05] But I I had built a couple of them just
+[01:07] for for test applications. But basically
+[01:11] I I learned how to compile
+[01:14] uh with GCC9 most you know Pix based
+[01:18] software that I could compile for the
+[01:20] Q&X that was on the device and I used
+[01:23] terminal to do that um or term 49 to
+[01:26] basically run the programs and then do
+[01:28] that and through that effort um one of
+[01:31] the other people in the community helped
+[01:33] me get Python 3.11 compiled and then
+[01:36] from there I took Python 3.11
+[01:40] and started building sophisticated
+[01:43] applications, I guess, more
+[01:44] sophisticated applications where I could
+[01:46] write to a database, uh, where I could
+[01:48] store and and run programs. And the one
+[01:52] thing that's different here, and I'd
+[01:53] welcome some criticism if you think that
+[01:55] I'm wrong, but
+[01:58] I often get asked this question like
+[02:00] what's different between like Termox for
+[02:03] Android or um some of the shell um
+[02:07] applications that Android makes versus
+[02:09] Term 49 for um the BlackBerry Passport.
+[02:14] And and one thing that that uh that I
+[02:17] was thinking about is that the term 49
+[02:20] application that you can install on your
+[02:22] BlackBerry 10 devices is is essentially
+[02:25] an actual shell into your device. It's
+[02:27] its own user land, but it's its own
+[02:29] shell directly into the device. Um where
+[02:33] you can install and compile and run
+[02:34] compiled software that is POSX
+[02:36] compliant. So I can communicate with
+[02:39] basic APIs. And it's really important
+[02:41] that the device is not rooted. I want
+[02:43] everyone to know that I have not rooted
+[02:45] or hacked the device. I have just
+[02:47] learned to use it within the confines of
+[02:50] the user land that's there. And so many
+[02:53] of the PPS services that are there are
+[02:55] actually accessible via um you know
+[02:58] hitting those endpoints with some JSON
+[03:00] or or echoing some code to to hit them.
+[03:04] And so anyways, get back on track.
+[03:08] Once I saw that Python 3.11
+[03:11] was compiled and running on the
+[03:13] passport, it was modern enough for me to
+[03:15] install like the SSL package. And
+[03:17] suddenly I had SSL translation and and
+[03:22] then it it grew from there. But I've
+[03:24] been experimenting with okay, what can I
+[03:26] compile and what can I uh run
+[03:30] um in Python? And so I can write I can
+[03:34] compile a lot of software like if you
+[03:36] say I want to compile git for QX using
+[03:39] the GCC9 tool chain I can do that right
+[03:42] I can compile git 2.54 and I can have
+[03:45] that on my phone or I can compile um
+[03:48] like SSH pass or any any you know pretty
+[03:54] standard library. So where the limits
+[03:55] are for me and and what I've hit the
+[03:58] limits or or they're not really limits
+[04:00] maybe it's more so time sync is like how
+[04:03] big of a program can I can I compile and
+[04:06] so one of the things I started off that
+[04:08] I felt was very important was to try and
+[04:10] get X11 to compile X11
+[04:14] for BlackBerry because if I had X11 then
+[04:16] I could use the X SDL as my view. So, if
+[04:20] you go look at my videos and you and you
+[04:21] find the Doom um compilation, that is
+[04:24] Doom compiled for QX running through X11
+[04:28] using an Android X server. So, it is
+[04:32] essentially running Doom on the Q&X
+[04:34] device, but I'm forwarding the display
+[04:35] to the X server. And I worked really
+[04:39] hard to get X11
+[04:41] because I knew if I got that um it would
+[04:45] open a lot of doors to compiling
+[04:47] software that required a display to
+[04:49] work. So I got X11. I played around with
+[04:52] compiling Doom. It worked. And then I
+[04:55] thought, well, what about like Dillow or
+[04:57] a web browser? And so I was able to, you
+[05:00] know, kind of get started. So, so
+[05:02] realistically, if I had infinite amounts
+[05:05] of time, I could compile Chromium. I I
+[05:09] know I could do it. It would just take a
+[05:11] long time. It's hard work. But I did
+[05:16] start looking at what was an easier, you
+[05:18] know, JavaScript engine for me to
+[05:20] compile. And I got QuickJS.
+[05:24] So, if you look at my Q&X packages on
+[05:27] GitHub, you will see that I've compiled
+[05:29] Quick.js, JS which is essentially a 2023
+[05:32] JavaScript engine. With that, I could
+[05:36] sit down and write an application for
+[05:38] any website essentially that renders in
+[05:42] modern JavaScript. I would have to patch
+[05:43] certain things and I'd also be
+[05:46] um I'd be at risk of them changing their
+[05:49] application and having to rewrite and
+[05:50] update my applications. And that's for
+[05:53] websites that are heavily re reliant on
+[05:56] frontends that render. But as an
+[05:58] example, uh last week I spent some time
+[06:02] compiling
+[06:04] um or building an application that used
+[06:08] Python for HTML and CSS translation and
+[06:12] QuickJS 2023 for rendering the
+[06:14] JavaScript and I was able to build a
+[06:18] like almost like a sightspecific browser
+[06:22] for X for Twitter and I was able to log
+[06:24] in by basically mim mimicking a browser
+[06:29] by figuring out their JavaScript by
+[06:31] building you know my own fetch API and
+[06:34] you know there I was able to log into X
+[06:36] and and check my uh my X accounts or
+[06:39] whatever and and so so technically I
+[06:43] could take that development strategy
+[06:45] further and I could um you know do that
+[06:48] but really what I'm searching for and I
+[06:50] think is is a browser right now
+[06:55] I know it's possible I don't know how
+[06:57] far I want to take it. It it it is
+[06:59] interesting to me that browsers
+[07:02] are kind of becoming
+[07:04] obsolete.
+[07:06] And what I mean by that is like okay
+[07:08] what what what do I use the browser for
+[07:10] right and it's typically logging into
+[07:12] like four websites on a regular basis.
+[07:14] The rest of my activity on the internet
+[07:17] is for me is managing servers and
+[07:20] managing through SSH and SFTP. So the
+[07:22] BlackBerry Passport works perfect. Now,
+[07:26] I built an I built an application in the
+[07:29] summer that connected to Perplexity API
+[07:32] that connected to JT GBT that connected
+[07:34] to um
+[07:37] Claude and it was a really sweet
+[07:41] application coded for the BlackBerry
+[07:43] browser and coded running Python and it
+[07:45] ran locally on the device and I would
+[07:47] literally just open up my console and
+[07:49] say AI news and it would give me all the
+[07:51] news of today, everything that I needed
+[07:53] and it would put it into my Blackberry
+[07:55] hub. And that's when I was like, "Oh,
+[07:56] wow. That's a way better way to think
+[07:59] about how I should use the internet
+[08:00] because it takes me away from the brain
+[08:02] drain of scrolling and all these kinds
+[08:04] of things." And it's very very clever
+[08:06] way to to be able to research a topic.
+[08:08] Essentially, I open up my my passport
+[08:11] and I open up term 49. I say, "AI do
+[08:14] some research for me." And it goes and
+[08:16] runs this big task and returns all the
+[08:18] information onto the berry. Um, which is
+[08:22] honestly a better way to think about how
+[08:25] to use hardware. And that's where this
+[08:27] whole like bring black backberry video
+[08:29] that I posted, you know, a month ago,
+[08:32] that's kind of the heart of it was. I
+[08:33] was saying I think we need to change our
+[08:35] our outlook on devices. Now, you could
+[08:37] say Apple intelligence this or whatever
+[08:40] else and and you know, all these all
+[08:42] these things are good. I mean, you know,
+[08:43] I can't beat the camera of a of an
+[08:46] iPhone. And really, that's not my
+[08:47] intention. That's not why I'm using a
+[08:49] Blackberry. I'm I'm using the Blackberry
+[08:51] because it forces me to become more
+[08:53] intelligent with how I think about
+[08:56] technology. And that's that's why if
+[08:59] there was if there is a reason to use
+[09:02] Blackberry,
+[09:04] it is for that reason only. It is it
+[09:06] will make you smarter because you will
+[09:08] be forced to understand more about
+[09:10] protocol and access and understanding
+[09:12] what's important when using the
+[09:14] internet, right? And so with Python 3.11
+[09:18] there and and and you know as a
+[09:22] programming stack it's compiled it's
+[09:24] running on the Blackberry. I can build
+[09:26] essentially any application I want. And
+[09:29] so if you download my app store you'll
+[09:31] see that I have maps. I recently just
+[09:33] built a basic YouTube application
+[09:35] because the YouTube API is pretty
+[09:37] friendly. Um, I could go further and
+[09:40] further and further and I could carry
+[09:42] API costs for the community and I could
+[09:45] resurrect a lot of the applications for
+[09:47] the BlackBerry the device. They would be
+[09:49] running inside either the Android
+[09:51] runtime or um they would be running
+[09:53] inside the uh the BlackBerry browser
+[09:56] through my Python uh based app store.
+[09:59] So, it's really exciting. I could take
+[10:00] it further and I think I am going to
+[10:03] over time. One of the best stacks that I
+[10:05] love is I have a Pebble smartwatch. I
+[10:07] have a BlackBerry passport and I am
+[10:09] update free and now I'm relatively
+[10:11] modern which is really cool. Um so it's
+[10:14] a lot of fun and I encourage the
+[10:17] community to keep growing. Now one
+[10:19] really exciting thing and um my brother
+[10:23] is is also somebody who's very good at
+[10:26] technology and he has a business called
+[10:28] Etunes. I think you should go check that
+[10:30] out. But he um he's a worldrenown uh
+[10:34] engine tuner. Um, and so one of the cool
+[10:37] things and and that that you know, one
+[10:39] of the things that keeps driving me to
+[10:41] push forward on all this BlackBerry
+[10:43] stuff that people are say, why are you
+[10:44] doing that? And I say, well, I've got
+[10:47] something with a BlackBerry Passport
+[10:49] that nobody else has. And that's USB
+[10:52] serial. right now. I could buy a special
+[10:54] cable for my iPhone and I could download
+[10:57] a special app and I could mimic serial
+[10:59] console output, but that is kind of
+[11:02] boring and sucks because I do not have
+[11:04] access to a terminal or a computer
+[11:07] system with that serial port. And so
+[11:10] with a BlackBerry Passport, guess what?
+[11:12] I've got that serial um I've got that
+[11:16] serial port ready to go. I just plug in
+[11:19] my little micro USB
+[11:22] and Python has access to the / USB/S
+[11:26] serial in the device through term49
+[11:29] which I've built my AI integration
+[11:32] towards. So the cool thing that I'm
+[11:34] going to be doing over the next little
+[11:36] bit is I wanted to build an interface
+[11:39] device that could interface with any
+[11:40] hardware and write drivers for it
+[11:42] instantly because how cool is that? So,
+[11:45] what this is,
+[11:47] this is an OBD2
+[11:50] um plugin for a vehicle. And you can see
+[11:53] that my Passport just powered it on,
+[11:55] right? And when I plug this into the
+[11:58] vehicle, the term 49 uh becomes the
+[12:02] bridge that runs the code through Python
+[12:05] to interact with the serial data that
+[12:08] I'm going to dump from the OBD2 on the
+[12:10] car. and I'm going to tune my vehicle
+[12:12] essentially using this device as the
+[12:14] bridge and that's why I'm still pushing
+[12:18] forward on the BlackBerry Passport. Now,
+[12:20] I showed you if you look if you watch
+[12:21] some of my videos, you'll see that I
+[12:23] interface similarly with the robot,
+[12:26] right? I control the robot through the
+[12:27] serial port just by getting access to
+[12:29] the servos and I do that. But it gets
+[12:32] deeper, right? Because once you have AI
+[12:34] access to a serial uh like to a device
+[12:38] that can handle serial communication and
+[12:40] you have access to that terminal that
+[12:41] shell
+[12:43] uh you can essentially write drivers and
+[12:45] translate things at light speed right
+[12:47] because AI is going to interpret that
+[12:48] for you and then build it.
+[12:51] So I will keep you posted but I will be
+[12:53] tuning my vehicle using the um term 49
+[12:57] and the uh AI on on on the on the phone.
+[13:01] So, really cool stuff. But that's one
+[13:03] reason why I keep pushing forward.
+[13:04] People say, "Why are you so obsessed
+[13:05] with the BlackBerry Passport?" And I
+[13:07] said, "Well, The Thing never asked me
+[13:08] for an update, which I love." And it's
+[13:11] always the same, which I love because I
+[13:13] am definitely somebody who who values
+[13:15] consistency. And over the last 15 years
+[13:18] working in the tech industry, I loathe
+[13:21] anything that forces me to update
+[13:23] because in my Linux systems, in my
+[13:26] servers, I never update and they just
+[13:28] work. I update maybe their security
+[13:30] rules, their firewall rules or their
+[13:32] security protocols if I need to. But
+[13:34] generally, it just stays online. It
+[13:37] doesn't update. It doesn't force me to
+[13:40] change. And I to a degree that's what I
+[13:44] value because like we still send an
+[13:45] email the same way we did 15 years ago.
+[13:48] And I feel like BlackBerry really has a
+[13:50] good way to do that. And now it's
+[13:53] changing it even further. And it's so
+[13:55] it's so interesting. I'm using Apple
+[13:56] Intelligence um on my iPhone 16. Um
+[14:02] and it's so limited. Like it really is.
+[14:05] I don't know. They're doing a good job.
+[14:07] I mean, you can tell it's open YouTube.
+[14:09] Good luck. But I don't know. I find it a
+[14:11] little bit limiting because it doesn't
+[14:13] have access to hardware and that's
+[14:16] another reason why I'll keep pushing
+[14:17] forward on the BlackBerry side. So, um,
+[14:20] so anyways, now an interesting
+[14:23] development, and I know that Blackberry
+[14:25] is not going to like this one, but I
+[14:28] saw,
+[14:29] um, I saw that the Blackberry, uh, there
+[14:33] was this impersonation patch that was
+[14:35] released in the community, and it's very
+[14:38] interesting. And what it does
+[14:41] is it embeds itself in an autoloader and
+[14:44] then you boot this autoloader
+[14:47] and it it doesn't root the phone, but it
+[14:49] gives you access to more users on that
+[14:51] phone. So, for example, you can control
+[14:53] the LED and whatnot. And this came I'm
+[14:56] not sure where this came from. It kind
+[14:58] of caught me off guard. I was reading
+[15:00] some of the Reddit threads and I was
+[15:01] like, "Wait a minute. There's a Reddit
+[15:03] thread about this impersonation patch
+[15:05] and pretty cool stuff." Um, and
+[15:09] essentially that would give me even more
+[15:10] access to the users on the BlackBerry
+[15:15] devices to control even more of the
+[15:17] hardware, which is kind of interesting.
+[15:19] Um, so I'll keep you posted on that. I
+[15:21] find that that's an interesting
+[15:22] development. Um, but again, BlackBerry
+[15:24] stands to not be hacked, which is cool.
+[15:26] Nobody has hacked the OS yet, which I
+[15:29] like that. I would hope that we keep it
+[15:31] secure for as long as we can. Um, but
+[15:35] uh, so yeah, that's that's kind of just
+[15:37] an update of where I'm at. I'm I'm gonna
+[15:39] be powering through with with Python.
+[15:41] I'm going to be powering through uh,
+[15:43] with, you know, interfacing with more
+[15:44] and more hardware with this device and
+[15:46] and using it to basically bridge AI into
+[15:49] it uh, into whatever hardware I'm
+[15:51] working on. And um, and yeah, it's going
+[15:55] uh, it's going to be exciting. So, um
+[15:57] I'm pretty committed I you know there
+[15:59] are applications that I like I can't
+[16:03] like uh just for people out there that
+[16:05] are curious like like how much can you
+[16:07] restore um and and again to iterate I
+[16:10] can't
+[16:12] if an API is locked down like Facebook
+[16:15] and WhatsApp those APIs are locked down
+[16:18] no matter what I do I can't really
+[16:22] you know start building a Facebook and
+[16:24] WhatsApp application unless I pay for
+[16:28] access to that API, which I could. I
+[16:30] could say I could give them their $250 a
+[16:32] month or whatever and I could start
+[16:34] building an application for Facebook and
+[16:35] WhatsApp, but then I have to carry that
+[16:37] cost and it it just doesn't make sense,
+[16:39] right? And so the other the other way to
+[16:42] do it is to look at their browser
+[16:44] application and build kind of like a
+[16:47] browser specific application for that um
+[16:51] network. But then again, I run the risk
+[16:53] of okay, well, if they change their
+[16:55] application, then I have to update my
+[16:57] applications. And as one person, it
+[16:59] becomes challenging. But I don't think
+[17:01] the internet's going to stay there for
+[17:04] too long. I don't think this whole
+[17:05] lockdown API thing is going to last
+[17:08] indefinitely. I think that as AI
+[17:10] increases,
+[17:12] I think we'll see more and more APIs
+[17:14] open up in time because AI is just going
+[17:17] to allow people to make more
+[17:18] applications very, very quickly. So, I
+[17:22] think we're I think that'll be short
+[17:23] term, but um but yeah, I see a lot of
+[17:26] life left in the device. Um I think that
+[17:29] like right now I'm running like a one
+[17:31] terabyte SD card on this Passport and
+[17:36] I've also got some custom cases if you
+[17:38] want. Um I was at Princess Auto. Uh, if
+[17:42] you guys know, if you're not from Canada
+[17:44] and you don't know Princess Auto, it's a
+[17:46] really cool store, but I was at Princess
+[17:47] Auto recently and they were selling
+[17:50] micro USB chargers for like a dollar and
+[17:53] they were the good ones and so I bought
+[17:55] like 20 of them. And so I've got a lot
+[17:58] of uh stuff that I'll be posting for
+[17:59] sale on my little Berry store, but I've
+[18:02] sold a couple cases. I appreciate those
+[18:04] sales. Um, but they're they're the case
+[18:06] is just for the BlackBerry SE, right? So
+[18:09] they're a good case. Um, but I also have
+[18:11] some cases coming for my my Z10s. And if
+[18:13] you if you want a Z10, I have like 65 of
+[18:16] them. They're pretty cool with an extra
+[18:18] battery. So, you get a Z10 with an extra
+[18:20] battery with a custom auto loader with
+[18:23] some of my applications in it. Um, and
+[18:25] so those are also for sale on my my
+[18:27] Berry store. But, uh, yeah, just just
+[18:30] it's just a hobby thing for me, right?
+[18:32] Like it's not uh this is a hobby thing.
+[18:34] I appreciate the sport because it makes
+[18:35] me push forward like to build another
+[18:38] app or to do that. So, so if you want to
+[18:40] join my Patreon and and tell me what you
+[18:42] like and what you want, I can try to to
+[18:45] build it. Um, one cool thing that I will
+[18:48] I will just uh I will tell you about I'm
+[18:50] going to boot it up and then we'll I'll
+[18:51] show you what it is. Um, so multiplayer
+[18:55] games, I I've been working on this idea
+[18:57] where I could, you know, release a
+[18:59] couple games. And so I I released
+[19:01] Tetris.
+[19:02] Basically, it's just a Tetris clone. um
+[19:05] little bit different, but it's uh it's
+[19:07] called Blocks, and it's it's on um
+[19:11] it's uh it's on my app store now if you
+[19:14] want to play it. It's pretty cool. It
+[19:15] uses the keyboard and whatnot. Um neat
+[19:18] little app. I'll probably do a short of
+[19:19] it. Uh but uh and then I was going to
+[19:22] try and work on my own multiplayer game.
+[19:24] Um and I've got some really cool ideas
+[19:25] on on how to do that. And so yeah, we we
+[19:29] can build actually pretty pretty neat
+[19:31] stuff with Python as the back end there.
+[19:33] you can build a lot of really cool
+[19:35] stuff. So, it's for So, if you're a
+[19:37] hobbyist and you're into this stuff, I
+[19:39] encourage you. learning about like going
+[19:42] this deep on a phone and going this deep
+[19:44] into an operating system taught me so
+[19:47] much. And it taught me um it taught me
+[19:52] just an incredible amount of information
+[19:54] when it comes to operating system
+[19:56] design, when it comes to, you know,
+[19:59] what's the difference between monolithic
+[20:01] kernels and, you know, micro kernel
+[20:03] operating systems. and just all these
+[20:05] subtleties that you know you would never
+[20:07] learn unless you did this deep dive into
+[20:10] BlackBerry and and it kind of gave me an
+[20:13] eye for looking at QX and and building
+[20:15] applications for Q&X and and I think
+[20:17] that if you're a Canadian I think you
+[20:19] should probably look at helping
+[20:21] BlackBerry do that. They've got a really
+[20:23] cool system and um hopefully they they
+[20:26] stick around and and do that. Um so
+[20:30] yeah, it's it's been a good I just
+[20:31] wanted to give this video to update
+[20:33] everybody. I haven't posted a real
+[20:35] video. I mostly post shorts. So, I
+[20:37] appreciate, you know, all the traffic
+[20:39] and all the views. And yeah, you'll see
+[20:41] lots more from me coming up. Um, and
+[20:44] lots more kind of uh hacky things with
+[20:46] hardware and interfacing with uh with
+[20:49] using the Blackberry. So, um, but yeah,
+[20:52] have a great uh, as you say, have a
+[20:55] great evening, but you might watch this
+[20:56] at any time. But, uh, thanks again and
+[20:58] you'll and we'll talk to you soon.

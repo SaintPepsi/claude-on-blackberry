@@ -1,0 +1,22 @@
+# sw7ft - BB10 git curl openssl (Short)
+# YouTube: https://www.youtube.com/watch?v=Zv1fasS3e2Q
+# Auto-generated transcript
+
+[00:00] Okay, just a quick update. I want to
+[00:02] show you something. Um, I have modern
+[00:06] git. So, we'll do git-v.
+[00:09] Let's quit out of that screen. Git -v.
+[00:12] You'll notice that it's 2.47.
+[00:16] And I've also u integrated a um I'll
+[00:20] just have to delete the directory the
+[00:22] SSLs. And so, the modern SSL is
+[00:25] configuring. So that means that if I go
+[00:28] and I simply do a got to go back a get
+[00:32] clone for something and I hit enter, it
+[00:34] is going to work. You're going to be
+[00:36] able to clone it right from the net. So
+[00:38] that's a big upgrade. Uh and then we
+[00:40] have curl- d- version. We also have curl
+[00:44] 8.12
+[00:46] and this also has the modern SSLs
+[00:48] installed. So pretty excited about that.

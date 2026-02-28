@@ -1,0 +1,87 @@
+# jvscholz - why I use a blackberry in 2024
+# YouTube: https://www.youtube.com/watch?v=_aVzGiP2UwA
+# Auto-generated transcript
+
+[00:00] USBC charging full Linux support sort of
+[00:05] quity keyboard a headphone jack where
+[00:08] can you get these specs in 2024 you can
+[00:11] bro today we're going to talk about this
+[00:13] phone um it's the last smartphone that
+[00:15] Blackberry ever made before they died um
+[00:19] and yeah today I want to talk about why
+[00:20] there's like a real argument and why
+[00:22] people still use these including me for
+[00:25] a pretty good amount of time initially I
+[00:26] was going to make a review on this
+[00:28] monitor but [ __ ] it it literally died
+[00:30] yesterday while I was playing tabletop
+[00:33] simulator with my friends um so kind of
+[00:37] pivoting for today and also you see that
+[00:39] monitor it also died a week
+[00:42] ago I'm just going to talk about how I
+[00:44] use the device this is coming from
+[00:46] someone who uses their smartphone as not
+[00:49] really like an entertainment device um I
+[00:51] don't have Instagram or like social
+[00:53] media on my phones um I'm using this as
+[00:55] a productivity device so something to
+[00:57] organize my life manage my tasks
+[01:00] responding to messages communication so
+[01:01] this device still feels premium to me in
+[01:03] 2024 I like the design the keyboard is
+[01:06] nice the space bars on these tend to
+[01:08] kind of wear out over time which is the
+[01:10] main thing to look for if you're getting
+[01:11] a used one the headphone jack sounds
+[01:14] good the Bluetooth quality is good
+[01:17] enough for me there's a remappable key
+[01:19] on the side here the speakers are good
+[01:21] the vibration motor is pretty good and
+[01:24] yeah the screen still holds up for me as
+[01:26] far as software is concerned it is
+[01:27] running Android 8 which at this point is
+[01:30] fairly updated I think we're on Android
+[01:32] like what 13 or 15 or something um it's
+[01:35] not receiving updates anymore um I'm not
+[01:38] super concerned about the security
+[01:39] aspect of it Blackberry is pretty secure
+[01:43] so the main JW for me is having the quy
+[01:45] keyboard I don't know if you guys have
+[01:47] ever tried to navigate like a terminal
+[01:48] on a smartphone using the onscreen
+[01:50] keyboard but like using themm or emac is
+[01:54] super unnatural just like using the
+[01:56] curly brackets to navigate or stuff like
+[01:58] that the call in and having all those
+[02:00] keys like on hand is really useful for
+[02:02] terminal stuff I personally use emac org
+[02:05] mode for a lot of my life and having the
+[02:07] ability to access and edit uh org mode
+[02:11] files easily from my like portable
+[02:13] terminal is super cool and super based
+[02:17] so the apps I use to accomplish all that
+[02:20] is I use turmo as my terminal emulator
+[02:23] to install I usually use like the turmo
+[02:25] drro um you can install Arch or any drro
+[02:28] you want really from from there I'll
+[02:30] install emac and then use the extension
+[02:33] doom emac and so that gives you evil
+[02:35] binds which I personally prefer um I'm
+[02:38] just mad used to it at this point from
+[02:40] there I'll use sync thing or get to sync
+[02:43] my or file so that I will always have my
+[02:46] or files on me so I can hack from the
+[02:48] grocery store shopping line so I'm
+[02:50] currently actually not using the phone I
+[02:52] used it for about uh a year and a half
+[02:54] while I was in uni still and I really
+[02:56] enjoyed having all that stuff while I
+[02:58] needed to like be out and about yeah I'm
+[03:00] not currently using it I'm mainly using
+[03:02] a dum phone at the moment because all I
+[03:04] really need when I'm out and about is
+[03:07] just communication and like a book so um
+[03:10] yeah I figured this might be helpful for
+[03:12] some of you uh big nerds out there so
+[03:14] yeah have a nice
+[03:16] March

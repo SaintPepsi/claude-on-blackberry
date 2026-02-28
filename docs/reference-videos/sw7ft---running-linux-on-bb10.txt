@@ -1,0 +1,77 @@
+# sw7ft - Running Linux on BB10
+# YouTube: https://www.youtube.com/watch?v=TB1L_YVyaFI
+# Auto-generated transcript
+
+[00:01] Okay, I'll just give you guys a quick
+[00:03] overview of Linux on the BlackBerry
+[00:06] Passport. So, I'm screen recording. I'm
+[00:07] recording on the video here and then
+[00:08] I'll I'll make the screen a little bit
+[00:10] bigger. But, uh, so let's close out of
+[00:15] term 49. Let's reopen
+[00:19] it. And there we are. Okay. So, I'm
+[00:22] going to do ls and I'm going to go cd
+[00:25] into Linux.
+[00:28] And then I'm going to go sh
+[00:33] run
+[00:34] underscore
+[00:35] [Music]
+[00:38] dune.
+[00:39] Okay. And there it is. It boots up and
+[00:42] I'm going to punch in root and I'm
+[00:44] logged in. So now I'm in like a Linux
+[00:47] image uh running on BB10 OS. And so
+[00:51] that's kind of makes this so cool. So I
+[00:53] have uh Linux, I have the whole kitten
+[00:56] kaboodleoodle. What I don't have is of
+[00:58] course my network adapter yet but it is
+[01:01] coming. Um it just uh so if I try and
+[01:04] ping obviously ping is not working but
+[01:07] it is fixable. I have done enough
+[01:09] research to figure out that I can do
+[01:12] this um through a couple different
+[01:14] methods. I can actually do it uh through
+[01:18] serial if I had to. But I don't have to.
+[01:20] I can actually do it through the network
+[01:22] bridge
+[01:24] um by bridging basically like a TCP IP
+[01:27] adapter on the Q&X side to the Linux
+[01:31] image side. So pretty neat. Um so yeah,
+[01:34] I've got, you know, all all the
+[01:36] different directories. I've got all the
+[01:38] commands. I love it. This was my dream
+[01:40] from from really the beginning. Uh this
+[01:43] was my my uh my objective was to be able
+[01:47] to do this. So I'm pretty happy with it.
+[01:49] Uh, as I've showed a couple of you, if I
+[01:51] go into like user and I go into bin, I
+[01:54] have a little bit more uh programs in
+[01:57] there. You can take a look. They're just
+[01:58] default Linux programs, right? Like
+[02:00] tail, whatnot. But my plan is to install
+[02:04] the uh the complete uh set of tools that
+[02:08] I want and then save it as an image and
+[02:10] then literally have Linux within my Q&X
+[02:14] system. The Q&X system is great. So,
+[02:16] let's not forget that it is really good.
+[02:19] Um, like if I control D here and I get
+[02:21] back to, you know, my normal system,
+[02:24] it's great. I mean, I got Python. I got
+[02:26] the whole works inside of my my normal
+[02:29] system. So, I'm really happy with that,
+[02:31] too. Um, and I can compile with GCC 9.3.
+[02:35] I can compile like Node, MySQL, PHP, all
+[02:39] these different things, which which I
+[02:40] have. I might even have PHP in here.
+[02:42] Yeah, I do. Um, I compiled this and you
+[02:47] know it was awesome. Just you know
+[02:48] modern tools, right? Like this thing is
+[02:51] like a server for me. So I I really
+[02:53] enjoy it. But anyways, I wanted to give
+[02:55] uh the the people that are very
+[02:56] interested in the Linux. I just wanted
+[02:57] to put this video together really quick.
+[02:59] I'll upload that and you'll hear a lot
+[03:01] more from me as I perfect it. But yes,
+[03:04] Blackberry is alive and well. Uh let's
+[03:08] just have some fun with it.

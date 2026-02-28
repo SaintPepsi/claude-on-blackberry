@@ -275,6 +275,28 @@ The failsafe shell bypasses `.bashrc` entirely, using `/system/bin/sh` directly.
   - XDA's $1000 bounty for BB Priv root was never claimed — now we know why
   - Most practical path: USB data cable for ADB shell (uid 2000, not root, but useful)
 
+### Session 8 — 2026-02-28
+
+**MILESTONE: KGSL FUZZING — 121K ITERATIONS, 0 CRASHES, DRIVER IS HARDENED**
+
+- Built 3 generations of "Ralph Wiggum" KGSL ioctl fuzzer
+  - v1 (`tools/ralph.c`): Dumb discovery + mutation (100K rounds)
+  - v2 (`tools/ralph2.c`): Structure-aware with kernel struct layouts (~5.4K iterations)
+  - v3 (`tools/ralph3.c`): High-intensity races + info leak hunting (~16K iterations)
+- Cross-compiled all via Docker ARM64 emulation, deployed to phone
+- **Corrected ioctl mapping:** 0x3a = PERFCOUNTER_QUERY, 0x40 = SYNCSOURCE_CREATE (not GPUOBJ)
+- **Device identified:** Adreno 418, chip_id 0x4010800, KGSL driver v3.14, 512KB GMEM
+- **Key findings across 121K iterations:**
+  - UAF and double-free: properly rejected (EINVAL)
+  - 10K alloc/free races: 0 crashes — kernel locking is solid
+  - Cross-fd free: accepted (by design, per-process object tracking)
+  - Mmap-after-free: mapping persists but zero-filled (mitigation active)
+  - GETPROPERTY: no stack leaks; DEVICE_SHADOW returns GPU MMIO address
+  - Perfcounters: 18 groups enumerated, no kernel address leakage
+  - DRAWCTXT_CREATE: EINVAL for all 20+ flag combinations
+- **Conclusion: KGSL driver on BB Priv is well-hardened from untrusted_app sandbox**
+- Most practical path to root remains USB data cable for ADB shell (uid 2000)
+
 ### Connection Command (for remote management)
 
 ```bash
