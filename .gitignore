@@ -2,7 +2,11 @@
 *.deb
 *.zip
 
-# Compiled fuzzer binaries (rebuild from source via Docker ARM64)
-tools/ralph
-tools/ralph2
-tools/ralph3
+# Compiled tool binaries (rebuild from source with aarch64-linux-musl-gcc)
+# Ignore everything in tools/ then un-ignore source files and subdirectories
+tools/*
+!tools/*.c
+!tools/terminal-replay/
+
+# Claude Code conversation logs (private, contains tokens)
+conversations/

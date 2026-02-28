@@ -4,16 +4,16 @@
 
 ## Overview
 
-| What | Decision |
-|------|----------|
-| Format | Story/Journey |
-| Length | 5-8 minutes (~900-1,400 words of script) |
-| Platform | YouTube (primary), Twitter/X teaser (60-90s) |
-| Audience | Tech/dev + broader tech-curious |
-| Scope | Sessions 1-3 only (getting Claude running) |
-| Sequel | Part 2: Root exploit arc (sessions 6-8) |
-| Presentation | Voiceover + screen recordings + IRL B-roll |
-| On-camera | No |
+| What         | Decision                                     |
+| ------------ | -------------------------------------------- |
+| Format       | Story/Journey                                |
+| Length       | 5-8 minutes (~900-1,400 words of script)     |
+| Platform     | YouTube (primary), Twitter/X teaser (60-90s) |
+| Audience     | Tech/dev + broader tech-curious              |
+| Scope        | Sessions 1-3 only (getting Claude running)   |
+| Sequel       | Part 2: Root exploit arc (sessions 6-8)      |
+| Presentation | Voiceover + screen recordings + IRL B-roll   |
+| On-camera    | No                                           |
 
 ## The Hook: Fake-Real Paper Reveal
 
@@ -34,10 +34,12 @@ The gag establishes humor, proves authenticity, and hooks the viewer in ~10 seco
 ## Narrative Structure
 
 ### Cold Open — The Hook (0:00-0:15)
+
 - Paper reveal gag (above)
 - Title card
 
 ### Act 1 — The Problem (0:15-1:30)
+
 - Show the BlackBerry Priv. 2015. Sliding keyboard.
 - Claude Code needs Node.js 18. This phone runs Android 6.0.1.
 - Three obvious paths, all blocked:
@@ -49,6 +51,7 @@ The gag establishes humor, proves authenticity, and hooks the viewer in ~10 seco
 **Visuals:** Phone IRL shots, terminal showing version numbers, text overlays showing the three blocked paths.
 
 ### Act 2 — The Hack (1:30-5:00)
+
 - The proot vector: raw proot + Alpine Linux ARM64 chroot inside Termux
 - Brief explainer: proot intercepts syscalls via ptrace, creates a fake Linux environment
 
@@ -71,6 +74,7 @@ Then the six discoveries, each as a mini-crisis:
 **Visuals:** Terminal sessions showing each error and fix. Text overlays for the technical concepts. Diagrams for the architecture stack.
 
 ### Act 3 — The Payoff (5:00-6:00)
+
 - Claude responds from the BlackBerry Priv
 - Show it actually working: type a question, get an answer
 - Use existing video footage of first successful run
@@ -81,6 +85,7 @@ Then the six discoveries, each as a mini-crisis:
 **Visuals:** Terminal showing Claude responding. IRL shot of phone with Claude running. Walking video showing mobile usage.
 
 ### Optional: End Card (6:00-6:30)
+
 - Architecture diagram: Android > Termux > proot > Alpine > Node > Claude
 - "Full setup guide in the description"
 - Subscribe CTA
@@ -88,6 +93,7 @@ Then the six discoveries, each as a mini-crisis:
 ## Visual Assets Needed
 
 ### Screen Recordings (to capture/recreate)
+
 - [ ] Termux opening on the phone
 - [ ] Alpine Linux booting in proot
 - [ ] Each of the six error messages (can recreate from session logs)
@@ -97,6 +103,7 @@ Then the six discoveries, each as a mini-crisis:
 - [ ] The architecture stack (text/diagram overlay)
 
 ### IRL Footage (already captured)
+
 - [ ] Screenshots of the process (scattered across devices)
 - [ ] Video: accepting commands while walking
 - [ ] Video: first run attempt, bash execution blocked
@@ -105,6 +112,7 @@ Then the six discoveries, each as a mini-crisis:
 - [ ] Close-up of phone screen showing Claude (to capture)
 
 ### Graphics/Overlays (to create)
+
 - [ ] Title card
 - [ ] Architecture diagram (Termux > proot > Alpine > Node > Claude)
 - [ ] "Dead end" overlays for the three blocked paths
@@ -113,6 +121,7 @@ Then the six discoveries, each as a mini-crisis:
 - [ ] End card with Part 2 tease
 
 ### The Paper Gag (to create)
+
 - [ ] Print a screenshot of Claude Code terminal
 - [ ] Tape it to the phone screen
 - [ ] Film: holding it, looks real from distance
@@ -124,13 +133,42 @@ Compressed version: Hook (paper gag) > "This phone is from 2015, Claude needs No
 
 ## Reference Videos
 
-| Channel | Video | Why It's Relevant |
-|---------|-------|-------------------|
-| sw7ft | BB10 git/curl/openssl, QNX Dev Update, Running Linux on BB10, Ubuntu on Passport | Content niche overlap: BlackBerry + Linux revival scene |
-| David Bombal | Kali Linux NetHunter Android install in 5 minutes | Practical tutorial, similar "install X on phone" format |
-| jvscholz | why I use a blackberry in 2024 (as a programmer) | Personal essay angle, programmer using old hardware |
+| Channel      | Video                                                                            | Why It's Relevant                                       |
+| ------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| sw7ft        | BB10 git/curl/openssl, QNX Dev Update, Running Linux on BB10, Ubuntu on Passport | Content niche overlap: BlackBerry + Linux revival scene |
+| David Bombal | Kali Linux NetHunter Android install in 5 minutes                                | Practical tutorial, similar "install X on phone" format |
+| jvscholz     | why I use a blackberry in 2024 (as a programmer)                                 | Personal essay angle, programmer using old hardware     |
 
 Transcripts saved in: `docs/reference-videos/`
+
+## Terminal Replay Visualizer
+
+A custom HTML/JS page that simulates a terminal "replaying" Claude's session, showing commands typing out, errors appearing, fixes being applied, and discovery banners between sections.
+
+**Purpose:** Cinematic B-roll for Act 2 (The Hack). Way more watchable than raw terminal recordings. Full control over pacing, colors, and dramatic timing.
+
+**Tech:** Single HTML file with inline JS/CSS. No build tools. Data-driven from a JSON sequence array.
+
+**Features:**
+- Dark terminal aesthetic (monospace, dark background, green/white text)
+- Characters type out at realistic speed (~50ms/char for commands, instant for output)
+- Error output in red, success in green
+- Discovery banners (e.g., "Discovery #1: musl ELF Interpreter") appear between sections
+- Configurable speed (play/pause, speed up/slow down for screen recording)
+- Data sourced from actual session logs in `docs/`
+
+**Sequence structure (JSON):**
+```json
+[
+  {"type": "command", "text": "proot -r ~/alpine /bin/sh", "delay": 500},
+  {"type": "error", "text": "No such file or directory", "delay": 1000},
+  {"type": "banner", "text": "Discovery #1: musl ELF Interpreter", "delay": 2000},
+  {"type": "command", "text": "proot -r ~/alpine /lib/ld-musl-aarch64.so.1 /bin/busybox sh", "delay": 500},
+  {"type": "success", "text": "/ #", "delay": 1000}
+]
+```
+
+**Location:** `tools/terminal-replay/index.html`
 
 ## Production Notes
 

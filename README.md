@@ -341,6 +341,66 @@ The failsafe shell bypasses `.bashrc` entirely, using `/system/bin/sh` directly.
   - DRAWCTXT_CREATE remains blocked — Sessions 8-9 conclusion was correct
   - GPU attack surface is closed for direct ioctl access on this device
 
+### Sessions 11-12 — 2026-02-28
+
+**MILESTONE: CVE-2019-2215 TESTED (INCORRECTLY CONCLUDED BLOCKED), KGSL PIVOT**
+
+- **CVE-2019-2215 (binder/epoll UAF) exhaustively tested** — vulnerability code CONFIRMED present but slab reclaim is BLOCKED:
+  - BPF socket filter spray: NO reclaim (20+ configurations, up to 1020 sockets)
+  - Pipe iovec readback v2 (0xAA/0xBB pattern detection): NO corruption across 6 configurations, up to 512 threads
+  - Self-reclaim (512 binder_thread objects sprayed): 0 anomalies
+  - RCU grace period delays (1ms to 500ms): NO effect
+  - Timing-precise single-shot (100 rounds): NO reclaim
+  - sendmsg Unix socket spray: only 278 messages before buffer limit, 0 corruption
+  - Slab exhaustion via BPF: consumed all ~1020 FDs, no FDs left for binder
+- **Conclusion: BlackBerry kernel has slab-level hardening preventing cross-caller-site reclaim**
+  - Cannot verify mechanism: /proc/slabinfo DOESN'T EXIST, /proc/config.gz DOESN'T EXIST, userfaultfd ENOSYS
+- **Every alternative kernel exploit path tested and eliminated:**
+  - Dirty COW (CVE-2016-5195): **PATCHED** (5-second race, file unchanged)
+  - AF_PACKET: EACCES
+  - perf_event_open: EACCES (paranoid=3)
+  - add_key/keyctl: EACCES (SELinux)
+  - msgsnd/msgrcv: ENOSYS (SysV IPC not compiled)
+  - /dev/mem, /dev/kmem: don't exist
+  - No setuid binaries, no writable /proc/sys paths
+- **KGSL identified as ONLY remaining viable kernel attack surface:**
+  - /dev/kgsl-3d0 is `crw-rw-rw-` (world writable)
+  - Security patch level 2017-10-05 means post-Oct-2017 KGSL CVEs likely unpatched
+  - kgsl_mmap_uaf.c created: tests mmap-after-free, alloc/free races, context races, info leaks
+  - Dynamic ioctl size probing (fixed ARM64 struct sizing: 48 bytes, not 32)
+  - **Compiled, awaiting execution on device**
+- **Tools created:** `pipe_readback_v2.c`, `slab_final_test.c`, `alt_exploit_test.c`, `kgsl_mmap_uaf.c`
+
+### Session 13 — 2026-02-28
+
+**MILESTONE: KGSL SOURCE CODE AUDIT — NO CODE-EXECUTION BUGS, ALL CVEs PATCHED**
+
+- **Stale mmap UAF confirmed but dead-ended**: Writing through stale mappings works, but freed GPU pages are **pinned in kernel memory** and never returned to the general page allocator — no path to kernel object corruption
+- **KGSL source code acquired and audited**: 45,605 lines across 60 files from LineageOS MSM8992 kernel
+- **CVE-2016-3842 (KGSL)**: CONFIRMED PATCHED — the `kgsl_check_idle()` removal fix is present in our source
+- **CVE-2019-10567 (KGSL ringbuffer)**: DRAWCTXT_CREATE blocked — cannot reach the vulnerable code path
+- **All known KGSL CVEs eliminated**: Every post-2017 KGSL CVE either patched in source, unreachable from our context, or requires blocked ioctls
+- **Conclusion: KGSL driver is a dead end** — no code-execution vulnerabilities accessible from shell domain
+
+### Session 14 — 2026-02-28
+
+**MILESTONE: CVE-2019-2215 UAF CONFIRMED EXPLOITABLE ON FIRST ATTEMPT**
+
+- **Systematic CVE research**: 4 parallel agents evaluated 20+ post-Oct-2017 CVEs against exact device constraints
+- **CVE-2019-2215 (binder/epoll UAF) identified as primary target**:
+  - Bug: `BINDER_THREAD_EXIT` frees `binder_thread` while epoll holds reference to `thread->wait`
+  - Present on kernel 3.10.84: `binder_poll` with `poll_wait(&thread->wait)` confirmed in 3.10 source
+  - Unpatched: discovered Nov 2017, patched Feb 2018, never backported to 3.10 branch
+  - Accessible: `/dev/binder` open, no SECCOMP in shell domain
+- **20+ CVEs evaluated and eliminated**: CVE-2015-1805 (patched), CVE-2016-0728 (SELinux), CVE-2017-7308/15649 (need CAP_NET_RAW), CVE-2016-4557/CVE-2017-16995 (need eBPF), CVE-2018-14634 (needs 32GB RAM), CVE-2018-17182 (3.16+ only), and more
+- **struct binder_thread layout calculated from 3.10 source**: ~0x130 bytes (kmalloc-512), `wait_queue_head_t` at offset 0x48, `task_list.next` at 0x50 (overlaps iovec[5].iov_base)
+- **UAF CONFIRMED on device**: readv returned 64 bytes (stopped at iov[5]) on first attempt — list_del corrupted the in-kernel iovec copy with kernel self-pointers. Slab reclaim WORKS with canonical readv-based spray.
+  - Sessions 11-12 conclusion was WRONG: the sentinel values used in previous PoCs caused EINVAL before readv could block, preventing the UAF from activating. The slab reclaim was never actually tested.
+- **Two exploit programs written and compiled**:
+  - `binder_uaf_poc.c`: UAF trigger with CPU pinning + retry loop (confirmed working)
+  - `binder_exploit.c`: Full 3-phase exploit skeleton (UAF → addr_limit overwrite → cred patch + SELinux disable)
+- **Next step**: Complete `binder_exploit.c` Phase 2 (controlled addr_limit overwrite) and Phase 3 (privilege escalation)
+
 ### Connection Command (for remote management)
 
 ```bash
