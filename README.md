@@ -297,6 +297,50 @@ The failsafe shell bypasses `.bashrc` entirely, using `/system/bin/sh` directly.
 - **Conclusion: KGSL driver on BB Priv is well-hardened from untrusted_app sandbox**
 - Most practical path to root remains USB data cable for ADB shell (uid 2000)
 
+### Session 9 — 2026-02-28
+
+**MILESTONE: ADB CONNECTION, SHELL DOMAIN AUDIT, MARCH 2018 KERNEL DISCOVERY**
+
+- **ADB shell access established** via $5 Keji Micro USB data cable from Officeworks
+  - USB device serial: 1162961923
+  - WiFi ADB enabled: `adb tcpip 5555` then `adb connect 192.168.4.51:5555`
+  - Shell identity: uid=2000(shell), SELinux `u:r:shell:s0`
+- **Kernel build date: March 2, 2018** — 5 months newer than Oct 2017 patch level
+  - BlackBerry rebuilt kernel post-Spectre/Meltdown
+  - Nov/Dec 2017 kernel CVEs (including CVE-2017-13162 binder EoP) likely patched
+- **Shell domain capabilities enumerated vs untrusted_app:**
+  - NEW: `settings put global/secure`, `pm grant`, `run-as`, `/data/local/tmp/` exec
+  - NEW: `dumpsys`, `service list/call` (132 services), `dmesg`, `content query`
+  - STILL BLOCKED: `setenforce`, `/system` remount, `insmod`, `/dev/` listing, kallsyms
+- **KGSL DRAWCTXT_CREATE tested from shell** — EINVAL for all 20 flag combos (Session 10: also EINVAL with correct flags, BB Priv kernel differs from LG source)
+- **Comprehensive CVE assessment:**
+  - 7 CVEs confirmed patched (Dirty COW, QuadRooter x4, iovyroot, KGSL GPUREADONLY)
+  - 3 CVEs likely patched (March 2018 kernel: binder EoP, late-2016 KGSL, 2017 KGSL UAF)
+  - 1 CVE unpatched but limited: CVE-2017-13156 Janus APK (app-level only, not root)
+- **CapBnd = 0xc0** (CAP_SETUID + CAP_SETGID in bounding set, but CapEff = 0)
+- **No SUID/SGID binaries anywhere**, KASLR active, SELinux enforcing
+- **Conclusion: No viable root path from shell context on this device**
+  - Every known exploit vector tested from both untrusted_app and shell domains
+  - Root requires either 0-day kernel exploit, bootloader unlock, or hardware attack
+
+### Session 10 — 2026-02-28
+
+**MILESTONE: KERNEL DATE CONFIRMED, KGSL DEEP EXTRACTION, SOURCE CODE ACQUIRED, BB KGSL DIVERGENCE CONFIRMED**
+
+- **Kernel build date verified**: `Fri Mar 2 10:04:14 EST 2018` confirmed from `/proc/version`, `uname -a`, and `ro.build.date` (UTC: 1520002871). Security patch level `2017-10-05` is bulletin date, not compile date.
+- **KGSL fully mapped** from sysfs, debugfs, platform device, and interrupt info:
+  - GPU: Adreno 418, MMIO at 0xfdb00000, IRQ 65 (114K interrupts)
+  - 6 frequency steps: 180MHz-600MHz, currently at 300MHz
+  - 16,506 GPU resets since boot (aggressive fault recovery)
+  - 16 active draw contexts across 7 processes
+- **com.termux has active KGSL contexts** (ctx 5 + ctx 10, 1.9M timestamps) — created through Android GLES library
+- **Snapdragon 808 kernel source acquired**: 60 KGSL driver files (45,605 lines) from [LineageOS/android_kernel_lge_msm8992](https://github.com/LineageOS/android_kernel_lge_msm8992) cm-13.0 branch
+- **LG source analysis**: found Session 8-9 tests were missing mandatory `PREAMBLE | NO_GMEM_ALLOC` flags
+- **Live verification disproved source analysis**: flags 0x41, 0x341, 0x10341 ALL returned EINVAL on BB Priv
+  - BB Priv kernel (`d46863f`) has KGSL modifications not in LG source
+  - DRAWCTXT_CREATE remains blocked — Sessions 8-9 conclusion was correct
+  - GPU attack surface is closed for direct ioctl access on this device
+
 ### Connection Command (for remote management)
 
 ```bash
