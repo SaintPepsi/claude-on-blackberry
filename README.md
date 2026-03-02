@@ -401,6 +401,35 @@ The failsafe shell bypasses `.bashrc` entirely, using `/system/bin/sh` directly.
   - `binder_exploit.c`: Full 3-phase exploit skeleton (UAF → addr_limit overwrite → cred patch + SELinux disable)
 - **Next step**: Complete `binder_exploit.c` Phase 2 (controlled addr_limit overwrite) and Phase 3 (privilege escalation)
 
+### Sessions 15-16 — 2026-03-01 to 2026-03-02
+
+**MILESTONE: BINDER UAF SLAB RECLAMATION BLOCKED AT ALL SIZES, KGSL PAGE REUSE DEAD**
+
+- **Binder exploit v1-v5** systematically tested iovec/readv spray, writev, sendmsg, keyctl, and multi-size slab spray
+  - v3: 80/80 threads blocked successfully, UAF triggered, list_del triggered — but 0 slab reclamation
+  - v4: System V IPC (`msgget`) returns ENOSYS, `add_key` returns EPERM
+  - v5: 0 anomalies across 5 cache sizes (kmalloc-128 through 512), 100 threads each
+- **GRSEC slab hardening confirmed** — prevents cross-object reclamation at ALL tested sizes
+- **ARM64 STTR/LDTR blocking factor**: even if reclaimed, pipe-based kernel R/W won't work (enforces EL0 permissions from kernel context)
+- **KGSL page reuse tested and dead**: `madvise(MADV_DONTNEED)` is a no-op on `VM_PFNMAP` VMAs — GPU pages stay pinned regardless of buffer free, fd close, or memory pressure
+- **Pivoted to**: KGSL CVEs (CVE-2018-5831 refcount race), CVE-2018-9568 WrongZone
+
+### Sessions 17-18 — 2026-03-02
+
+**MILESTONE: PER-CALLSITE SLAB ISOLATION DEFINITIVELY CONFIRMED — CVE-2019-2215 STANDARD PATH CLOSED**
+
+- **Binder exploit v8-v10** — most exhaustive slab reclamation tests ever run:
+  - v8: Seccomp-BPF spray at 5 cache sizes (kmalloc-192 through 2048), fork-based crash isolation → 0 corruption
+  - v9: CPU pinning (all 4 CPUs) + socket BPF (256 sockets) + sendmsg + binder thread spray → 0 cross-type reclamation
+  - v10: Massive post-free (600 seccomp + 128 pipes + 128 socket BPF), combined shotgun on all CPUs → 0 corruption
+- **Root cause identified**: GRSEC per-callsite slab isolation — each kzalloc/kmalloc callsite gets its own logical cache, invisible in `/sys/kernel/slab/` but enforced at runtime
+- **Same-type reclamation works** but is unexploitable — identical binder_thread layout at offsets 80/88 makes list_del a no-op
+- **PAX_MEMORY_SANITIZE NOT active** — freed memory retains old values
+- **PAX_USERCOPY IS active** — separate usercopy-kmalloc-* caches confirmed
+- **Seccomp-BPF from uid=2000** — installs successfully (up to ~655 filters), no CAP_SYS_ADMIN needed
+- **CVE-2019-2215 standard exploitation path is CLOSED** — no viable slab spray mechanism exists on this kernel
+- **Remaining vectors**: CVE-2018-5831 (KGSL refcount), CVE-2018-13905 (syncsource race), CVE-2018-9568 (WrongZone), compat_writev (32-bit binary)
+
 ### Connection Command (for remote management)
 
 ```bash
