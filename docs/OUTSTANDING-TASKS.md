@@ -150,8 +150,9 @@ From earlier sessions (no KASLR on this device):
 
 ## Recommended Next Session Order
 
-1. **#78 + #81** (crash dumps + address leak scan) — low effort, high info value, do in parallel
-2. **#80** (KGSL ALLOC/FREE_ID race) — most promising unexplored exploitation vector
-3. **Compat binder kernel source analysis** — read compat_binder_ioctl() to fix 32-bit struct layout
-4. **#79 + #74** (syncsource + refcount race) — quick runtime tests to confirm source analysis
-5. **#72** (WrongZone runtime test) — quick slab cache confirmation
+1. ~~**#78 + #81** (crash dumps + address leak scan)~~ — **DONE** (Session 23)
+2. **#79** (syncsource probe) — UPGRADED priority, confirmed accessible from dmesg evidence
+3. **#80** (KGSL ALLOC/FREE_ID race) — most promising unexplored exploitation vector
+4. **Compat binder kernel source analysis** — read compat_binder_ioctl() to fix 32-bit struct layout
+5. **#74** (refcount race) — quick runtime test to confirm source analysis
+6. **#72** (WrongZone runtime test) — quick slab cache confirmation
