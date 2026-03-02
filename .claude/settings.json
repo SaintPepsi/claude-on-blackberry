@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/hogers/Projects/claude-on-blackberry/.claude/hooks/doc-reminder.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
