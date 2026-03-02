@@ -9,6 +9,24 @@
             "command": "/Users/hogers/Projects/claude-on-blackberry/.claude/hooks/doc-reminder.sh"
           }
         ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/hogers/Projects/claude-on-blackberry/.claude/hooks/auto-commit.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/hogers/Projects/claude-on-blackberry/.claude/hooks/auto-commit.sh"
+          }
+        ]
       }
     ]
   }

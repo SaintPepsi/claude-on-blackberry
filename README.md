@@ -430,6 +430,25 @@ The failsafe shell bypasses `.bashrc` entirely, using `/system/bin/sh` directly.
 - **CVE-2019-2215 standard exploitation path is CLOSED** — no viable slab spray mechanism exists on this kernel
 - **Remaining vectors**: CVE-2018-5831 (KGSL refcount), CVE-2018-13905 (syncsource race), CVE-2018-9568 (WrongZone), compat_writev (32-bit binary)
 
+### Sessions 19-22 — 2026-03-02
+
+**MILESTONE: KGSL EXPLOITATION DEAD, DIRTY COW DEAD, PAX FLAGS DECODED, BROAD SURFACE PROBE**
+
+- **KGSL deep exploitation tested and eliminated**:
+  - mmap-after-free: R/W works but VMA refcount keeps pages alive (never truly freed)
+  - "Double-free" via ioctl 0x24+0x21: ioctl 0x24 is NOT a free (idempotent, probably cache flush)
+  - No page reclamation despite BPF spray, anonymous pages (256MB), xattr spray, pipe spray (500×16 pages)
+  - GPU pages in isolated memory pool, never reused by kernel allocations
+- **Dirty COW (CVE-2016-5195) definitively dead**: /proc/self/mem write EPERM on all memory types (GRSEC)
+- **Alternative COW vectors dead**: process_vm_writev (ENOSYS), ptrace (EPERM)
+- **PaX flags decoded: `Pemrs`** — PAGEEXEC enforced, but MPROTECT and RANDMMAP **disabled**
+  - RWX memory freely available (no W^X enforcement)
+  - Can make stack executable, mmap RWX, mprotect RW→RX
+- **CVE-2014-3153 (towelroot): PATCHED** — non-PI to PI requeue properly validated (EINVAL)
+- **Broad surface probe**: perf blocked (paranoid=3), no writable /proc/sys or /sys entries
+- **New attack surface found**: /dev/ion (ION allocator), /dev/adsprpc-smd (Qualcomm ADSP RPC)
+- **13 total dead vectors** documented across all sessions
+
 ### Connection Command (for remote management)
 
 ```bash
