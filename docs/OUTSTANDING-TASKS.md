@@ -39,17 +39,14 @@
 ### Priority 1: Information Gathering (unblock everything else)
 
 **#78 — Crash dump mining (dmesg + last_kmsg + pstore)**
-- Status: PENDING
-- Rationale: Kernel crash logs may contain stack traces with kernel addresses, leaked pointers, or evidence of other processes' exploitation attempts. Could reveal exploitable bugs we haven't considered.
-- Approach: Check /proc/last_kmsg, /sys/fs/pstore/*, dmesg (if accessible), /data/system/dropbox/
-- Effort: Low (read-only, no risk)
+- Status: COMPLETE (Session 23)
+- Result: /proc/last_kmsg doesn't exist, /sys/fs/pstore SELinux blocked, /data/system/dropbox permission denied. **dmesg IS READABLE** and contains crash traces with leaked kernel addresses (task_struct, thread_info, pgd). Syncsource error message leaked address ffffffc081092180.
+- Key finding: dmesg is the primary crash dump source and it works.
 
 **#81 — Kernel address leak scan (dmesg + proc + sysfs)**
-- Status: PENDING
-- Rationale: Even though kptr_restrict zeroes /proc/kallsyms, there may be other leak paths: /proc/timer_list, /proc/iomem, /sys/kernel/debug/*, slab debug info, kernel log messages with %pK that aren't properly filtered.
-- Approach: Comprehensive scan of all readable /proc and /sys entries for hex patterns matching kernel address range (0xffffffc0*)
-- Effort: Low (read-only, no risk)
-- Note: We already have known addresses from earlier sessions (commit_creds, prepare_kernel_cred, selinux_enforcing, init_cred) — but confirming these are still correct and finding additional ones is valuable.
+- Status: COMPLETE (Session 23)
+- Result: 32 unique kernel addresses found in dmesg. /proc/timer_list, /proc/vmallocinfo, /proc/modules all readable but addresses zeroed by kptr_restrict. /proc/iomem permission denied. **debugfs broadly readable**: binder/, kgsl/, ion/ subdirectories accessible. ION heaps show physical address ranges (ADSP: 0xcd020000, QSEECOM: 0xcb800000). vmallocinfo provides 62 function+offset names useful for computing addresses from known base.
+- Key finding: dmesg is the primary leak vector. Triggering controlled crashes can harvest fresh heap addresses on demand.
 
 ### Priority 2: Unexplored Kernel Attack Surface
 
@@ -60,10 +57,10 @@
 - Blocker: Need to confirm these ioctls exist in this build
 
 **#79 — KGSL syncsource ioctl probe (CVE-2018-13905)**
-- Status: PENDING
-- Rationale: Even though earlier assessment said kref prevents the UAF, we should verify the syncsource ioctls are actually present and test the exact trigger path. The kref assessment was based on source analysis, not runtime testing.
-- Approach: Probe for syncsource-related ioctls (CREATE_SYNCSOURCE, CREATE_SYNC_FENCE, SIGNAL_SYNC_FENCE), test if they're accessible from shell
-- Blocker: May already be dead (kref), but worth 10 minutes to confirm
+- Status: PENDING (UPGRADED — syncsource confirmed accessible via dmesg evidence)
+- Rationale: dmesg from Session 23 proves syncsource ioctls ARE accessible from shell (pid 17300 created syncsource, triggered fence error, leaked kernel address ffffffc081092180). The kref assessment was based on source analysis only.
+- Approach: Probe for syncsource-related ioctls (CREATE_SYNCSOURCE, CREATE_SYNC_FENCE, SIGNAL_SYNC_FENCE), test if they're accessible from shell, test race conditions
+- Evidence: `[ffffffc081092180] kgsl-syncsource-pid-17300-1: error` in dmesg
 
 **#72 — CVE-2018-9568 WrongZone (sk_clone_lock type confusion)**
 - Status: PENDING (assessed as wrong direction, but not runtime-tested)
