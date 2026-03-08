@@ -13,7 +13,7 @@
 
 ---
 
-## Dead Vectors (14 total — do not revisit)
+## Dead Vectors (15 total — do not revisit)
 
 | # | Vector | Why Dead |
 |---|--------|----------|
@@ -31,6 +31,7 @@
 | 12 | CVE-2014-3153 (towelroot) | PATCHED — futex requeue validated |
 | 13 | perf_event_open | paranoid=3, all operations EPERM |
 | 14 | 32-bit compat binder UAF | ENTER_LOOPER returns EINVAL from 32-bit (compat BWR struct mismatch) |
+| 15 | CVE-2018-11976 (keymaster side-channel) | Requires root + custom kernel module (catch-22). Extracts app-level keys, not useful for privilege escalation. Sources: NCC Group Cachegrab README, whitepaper pp.5/15/17, NVD CVSS 5.5 |
 
 ---
 
@@ -77,11 +78,15 @@
 ### Priority 2b: TrustZone / QSEE Vectors (Session 24 findings)
 
 **#82 — CVE-2018-11976 Keymaster side-channel key extraction**
-- Status: PENDING — HIGH PRIORITY
-- Rationale: Side-channel attack extracts ECDSA private keys from Qualcomm keymaster trustlet via cache timing. Disclosed June 2019, affects MSM8992. Device patch level 2017-10-05 means **almost certainly unpatched**. keystore.msm8992.so (hardware-backed HAL) is actively loaded. Does NOT require direct qseecom access — works through keystore binder service.
-- Approach: Implement cache timing attack against keymaster ECDSA operations. Trigger key generation via keystore service, measure cache side-channel.
-- Reference: https://www.nccgroup.com/us/research-blog/technical-advisory-qualcomm-keymaster-trustzone-ecdsa-vulnerability/
-- Effort: High (requires cache timing implementation)
+- Status: DEAD (Session 24 — post-research correction)
+- Rationale: Initially flagged as promising because device patch level predates disclosure. **Primary source verification revealed this is a post-exploitation technique, not a privilege escalation.**
+- Why Dead:
+  1. Requires root + custom kernel with CONFIG_MODULES enabled + insmod of Cachegrab kernel module (NCC Group whitepaper p.5, p.17)
+  2. Uses smp_call_function_single for cache probing — kernel-level only (whitepaper p.15)
+  3. NVD CVSS 5.5 MEDIUM — high confidentiality impact only, zero integrity/availability
+  4. Extracted keys are app-level keystore ECDSA keys, not boot signing keys or anything useful for privilege escalation
+  5. Catch-22: need root to run the attack that was supposed to help get root
+- Sources: [NCC Group Cachegrab README](https://github.com/nccgroup/cachegrab), [NCC Group whitepaper "Hardware-Backed Heist"](https://www.nccgroup.com/us/research-blog/technical-advisory-qualcomm-keymaster-trustzone-ecdsa-vulnerability/), [NVD CVE-2018-11976](https://nvd.nist.gov/vuln/detail/CVE-2018-11976)
 
 **#83 — Widevine trustlet reverse engineering (confirm CVE-2015-6639 patch status)**
 - Status: PENDING

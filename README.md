@@ -466,7 +466,7 @@ The failsafe shell bypasses `.bashrc` entirely, using `/system/bin/sh` directly.
   - `com.qualcomm.qti.auth.fidocryptodaemon` — FIDO auth via QSEE, binder accessible, less audited than Widevine
   - `keystore.msm8992.so` / `gatekeeper.msm8992.so` — hardware-backed HALs
   - `com.blackberry.security.trustzone.ITrustZoneService` — BlackBerry proprietary TZ service, binder accessible
-- **CVE-2018-11976 (keymaster side-channel)**: Disclosed June 2019, affects MSM8992. Device's Oct 2017 patch level means **almost certainly unpatched**. Extracts ECDSA private keys from Qualcomm keymaster trustlet via cache timing attack.
+- ~~**CVE-2018-11976 (keymaster side-channel)**~~: **DEAD END** — requires root + custom kernel module to execute (Cachegrab tool). Post-exploitation technique for extracting app-level ECDSA keys, not a privilege escalation path. NVD CVSS 5.5 MEDIUM. See [NCC Group Cachegrab](https://github.com/nccgroup/cachegrab) and whitepaper "Hardware-Backed Heist".
 - **ION QSEE heap**: 11 active allocations, physical addresses known (no ASLR on ION)
 
 ### Connection Command (for remote management)

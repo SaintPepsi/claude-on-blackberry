@@ -141,7 +141,7 @@ Binder: accessible from shell (returns "Invalid argument" on probe)
 ```
 - Hardware-backed keystore running through QSEE
 - `sys.keymaster.loaded = true` — actively running
-- Keystore vulnerabilities have been found in Qualcomm's QSEE implementation (CVE-2018-11976, keymaster key extraction)
+- Keystore vulnerabilities have been found in Qualcomm's QSEE implementation (CVE-2018-11976, keymaster key extraction — **but see note below: requires root, dead end for privilege escalation**)
 
 #### Gatekeeper HAL
 ```
@@ -200,11 +200,9 @@ Active ION allocations confirm QSEE is actively processing secure operations. Th
 
 2. **Probe the FIDO crypto daemon** — less publicly audited than Widevine. Research known FIDO/QSEE CVEs for this era. The binder interface is accessible.
 
-3. **Research keymaster CVEs** — CVE-2018-11976 (Qualcomm keymaster side-channel) may apply. Security patch 2017-10-05 predates this CVE (disclosed June 2019).
+3. ~~**Research keymaster CVEs** — CVE-2018-11976 (Qualcomm keymaster side-channel)~~ **DEAD END**: Requires root + custom kernel module (Cachegrab). This is a post-exploitation technique for extracting app-level ECDSA keys, not a privilege escalation path. NVD CVSS 5.5 MEDIUM, confidentiality-only impact. Sources: NCC Group Cachegrab README, whitepaper "Hardware-Backed Heist" pp.5/15/17, NVD.
 
 4. **Investigate the BlackBerry `trust_zone` service** — proprietary, undocumented. What does `com.blackberry.security.trustzone.ITrustZoneService` actually do? What commands does it accept?
-
-5. **Check if keymaster CVE-2018-11976 applies** — this is a **side-channel attack** that extracts ECDSA keys from Qualcomm's keymaster trustlet. Disclosed June 2019, affects MSM8992. The device's Oct 2017 patch level means it's almost certainly unpatched.
 
 ---
 
