@@ -4,7 +4,7 @@
 **Architecture:** ARM64 (aarch64), Snapdragon 808/MSM8992
 **Hardening:** GRSEC/PAX enabled, SELinux enforcing, shell UID=2000
 **Patch level:** 2017-10-05
-**Last updated:** 2026-03-02
+**Last updated:** 2026-03-08
 
 ## Ultimate Goal
 
@@ -73,6 +73,40 @@
 - Rationale: Similar to #79 — source analysis says kref prevents it, but a focused runtime test with high thread counts might reveal timing windows.
 - Approach: Multi-threaded GPUMEM_ALLOC/SHAREDMEM_FREE race test
 - Effort: Medium
+
+### Priority 2b: TrustZone / QSEE Vectors (Session 24 findings)
+
+**#82 — CVE-2018-11976 Keymaster side-channel key extraction**
+- Status: PENDING — HIGH PRIORITY
+- Rationale: Side-channel attack extracts ECDSA private keys from Qualcomm keymaster trustlet via cache timing. Disclosed June 2019, affects MSM8992. Device patch level 2017-10-05 means **almost certainly unpatched**. keystore.msm8992.so (hardware-backed HAL) is actively loaded. Does NOT require direct qseecom access — works through keystore binder service.
+- Approach: Implement cache timing attack against keymaster ECDSA operations. Trigger key generation via keystore service, measure cache side-channel.
+- Reference: https://www.nccgroup.com/us/research-blog/technical-advisory-qualcomm-keymaster-trustzone-ecdsa-vulnerability/
+- Effort: High (requires cache timing implementation)
+
+**#83 — Widevine trustlet reverse engineering (confirm CVE-2015-6639 patch status)**
+- Status: PENDING
+- Rationale: The trustlet binary is signed by BlackBerry (not Qualcomm standard). There's a non-zero chance BB re-signed an old binary without updating. Also, the trustlet may have NEW vulnerabilities beyond the known 2015-2016 CVEs. The binary is 181KB, 32-bit ARM, loadable in Ghidra.
+- Approach: Extract widevine.b02 (code segment), load in Ghidra, find PRDiag handler, check for known CVE patches, audit for new bugs
+- Files: /system/etc/firmware/widevine.{mdt,b00,b01,b02,b03}
+- Effort: Medium-High (RE work)
+
+**#84 — FIDO crypto daemon exploitation**
+- Status: PENDING
+- Rationale: `com.qualcomm.qti.auth.fidocryptodaemon` runs with QSEE access and is binder-accessible from shell. FIDO implementations have had multiple CVEs. Less publicly audited than Widevine.
+- Approach: Enumerate binder interface, research known FIDO/QSEE CVEs, fuzz binder commands
+- Effort: Medium
+
+**#85 — BlackBerry trust_zone service investigation**
+- Status: PENDING
+- Rationale: `com.blackberry.security.trustzone.ITrustZoneService` is a proprietary BB service accessible via binder. Undocumented. May accept commands that interact with QSEE or BB's Security Shim.
+- Approach: Enumerate binder transactions, probe commands, reverse engineer the service binary
+- Effort: Medium
+
+**#86 — Indirect QSEE access via DRM binder service**
+- Status: PENDING
+- Rationale: Direct qseecom is SELinux-blocked, but `drm.drmManager` is binder-accessible from shell and mediaserver has qseecom access. If ANY trustlet vulnerability exists, this is the reachable path.
+- Approach: Craft DRM binder calls to trigger QSEE trustlet operations, test with fuzzing
+- Effort: High
 
 ### Priority 3: Novel Angles
 
