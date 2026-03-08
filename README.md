@@ -449,6 +449,26 @@ The failsafe shell bypasses `.bashrc` entirely, using `/system/bin/sh` directly.
 - **New attack surface found**: /dev/ion (ION allocator), /dev/adsprpc-smd (Qualcomm ADSP RPC)
 - **13 total dead vectors** documented across all sessions
 
+### Session 24 — 2026-03-08
+
+**MILESTONE: TRUSTZONE/QSEE ATTACK SURFACE MAPPED — DIRECT ACCESS BLOCKED, INDIRECT PATHS OPEN**
+
+- **`/dev/qseecom` SELinux-blocked** for shell domain — `tee_device` type, all open modes EACCES
+- **qseecomd running** (PID 503/543, uid=1000 system) — brokers Normal World ↔ QSEE communication
+- **Widevine trustlet analyzed**: 32-bit ARM, L1 hardware-backed, signed by BlackBerry (ECC-521/SHA-512, not Qualcomm standard)
+  - SW_ID: 0x0C, HW_ID: 009690E100000000, DEBUG field: 2 (non-zero)
+  - OEMCrypto Level 1 confirmed — full hardware key ladder in QSEE
+  - Binary dated March 2018
+- **CVE-2015-6639 (Widevine PRDiag): LIKELY PATCHED** — firmware 21 months after fix. Definitive confirmation requires RE of trustlet binary
+- **CVE-2016-2431 (TZ kernel escalation): LIKELY PATCHED** — firmware 17 months after fix
+- **DRM binder service reachable** from shell — the indirect path to Widevine trustlet IS open
+- **New attack surfaces discovered**:
+  - `com.qualcomm.qti.auth.fidocryptodaemon` — FIDO auth via QSEE, binder accessible, less audited than Widevine
+  - `keystore.msm8992.so` / `gatekeeper.msm8992.so` — hardware-backed HALs
+  - `com.blackberry.security.trustzone.ITrustZoneService` — BlackBerry proprietary TZ service, binder accessible
+- ~~**CVE-2018-11976 (keymaster side-channel)**~~: **DEAD END** — requires root + custom kernel module to execute (Cachegrab tool). Post-exploitation technique for extracting app-level ECDSA keys, not a privilege escalation path. NVD CVSS 5.5 MEDIUM. See [NCC Group Cachegrab](https://github.com/nccgroup/cachegrab) and whitepaper "Hardware-Backed Heist".
+- **ION QSEE heap**: 11 active allocations, physical addresses known (no ASLR on ION)
+
 ### Connection Command (for remote management)
 
 ```bash

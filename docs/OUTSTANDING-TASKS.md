@@ -4,7 +4,7 @@
 **Architecture:** ARM64 (aarch64), Snapdragon 808/MSM8992
 **Hardening:** GRSEC/PAX enabled, SELinux enforcing, shell UID=2000
 **Patch level:** 2017-10-05
-**Last updated:** 2026-03-02
+**Last updated:** 2026-03-08
 
 ## Ultimate Goal
 
@@ -13,7 +13,7 @@
 
 ---
 
-## Dead Vectors (14 total — do not revisit)
+## Dead Vectors (15 total — do not revisit)
 
 | # | Vector | Why Dead |
 |---|--------|----------|
@@ -31,6 +31,7 @@
 | 12 | CVE-2014-3153 (towelroot) | PATCHED — futex requeue validated |
 | 13 | perf_event_open | paranoid=3, all operations EPERM |
 | 14 | 32-bit compat binder UAF | ENTER_LOOPER returns EINVAL from 32-bit (compat BWR struct mismatch) |
+| 15 | CVE-2018-11976 (keymaster side-channel) | Requires root + custom kernel module (catch-22). Extracts app-level keys, not useful for privilege escalation. Sources: NCC Group Cachegrab README, whitepaper pp.5/15/17, NVD CVSS 5.5 |
 
 ---
 
@@ -73,6 +74,44 @@
 - Rationale: Similar to #79 — source analysis says kref prevents it, but a focused runtime test with high thread counts might reveal timing windows.
 - Approach: Multi-threaded GPUMEM_ALLOC/SHAREDMEM_FREE race test
 - Effort: Medium
+
+### Priority 2b: TrustZone / QSEE Vectors (Session 24 findings)
+
+**#82 — CVE-2018-11976 Keymaster side-channel key extraction**
+- Status: DEAD (Session 24 — post-research correction)
+- Rationale: Initially flagged as promising because device patch level predates disclosure. **Primary source verification revealed this is a post-exploitation technique, not a privilege escalation.**
+- Why Dead:
+  1. Requires root + custom kernel with CONFIG_MODULES enabled + insmod of Cachegrab kernel module (NCC Group whitepaper p.5, p.17)
+  2. Uses smp_call_function_single for cache probing — kernel-level only (whitepaper p.15)
+  3. NVD CVSS 5.5 MEDIUM — high confidentiality impact only, zero integrity/availability
+  4. Extracted keys are app-level keystore ECDSA keys, not boot signing keys or anything useful for privilege escalation
+  5. Catch-22: need root to run the attack that was supposed to help get root
+- Sources: [NCC Group Cachegrab README](https://github.com/nccgroup/cachegrab), [NCC Group whitepaper "Hardware-Backed Heist"](https://www.nccgroup.com/us/research-blog/technical-advisory-qualcomm-keymaster-trustzone-ecdsa-vulnerability/), [NVD CVE-2018-11976](https://nvd.nist.gov/vuln/detail/CVE-2018-11976)
+
+**#83 — Widevine trustlet reverse engineering (confirm CVE-2015-6639 patch status)**
+- Status: PENDING
+- Rationale: The trustlet binary is signed by BlackBerry (not Qualcomm standard). There's a non-zero chance BB re-signed an old binary without updating. Also, the trustlet may have NEW vulnerabilities beyond the known 2015-2016 CVEs. The binary is 181KB, 32-bit ARM, loadable in Ghidra.
+- Approach: Extract widevine.b02 (code segment), load in Ghidra, find PRDiag handler, check for known CVE patches, audit for new bugs
+- Files: /system/etc/firmware/widevine.{mdt,b00,b01,b02,b03}
+- Effort: Medium-High (RE work)
+
+**#84 — FIDO crypto daemon exploitation**
+- Status: PENDING
+- Rationale: `com.qualcomm.qti.auth.fidocryptodaemon` runs with QSEE access and is binder-accessible from shell. FIDO implementations have had multiple CVEs. Less publicly audited than Widevine.
+- Approach: Enumerate binder interface, research known FIDO/QSEE CVEs, fuzz binder commands
+- Effort: Medium
+
+**#85 — BlackBerry trust_zone service investigation**
+- Status: PENDING
+- Rationale: `com.blackberry.security.trustzone.ITrustZoneService` is a proprietary BB service accessible via binder. Undocumented. May accept commands that interact with QSEE or BB's Security Shim.
+- Approach: Enumerate binder transactions, probe commands, reverse engineer the service binary
+- Effort: Medium
+
+**#86 — Indirect QSEE access via DRM binder service**
+- Status: PENDING
+- Rationale: Direct qseecom is SELinux-blocked, but `drm.drmManager` is binder-accessible from shell and mediaserver has qseecom access. If ANY trustlet vulnerability exists, this is the reachable path.
+- Approach: Craft DRM binder calls to trigger QSEE trustlet operations, test with fuzzing
+- Effort: High
 
 ### Priority 3: Novel Angles
 
